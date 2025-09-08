@@ -1,24 +1,49 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "AchievementPlugin.h"
-#include "Misc/MessageDialog.h"
 
+#if WITH_EDITOR
+#include "ISettingsModule.h" 
+#include "ISettingsSection.h"
+#endif
+#include "Misc/MessageDialog.h"
 #include "USaveSystem.h"
+
 
 #define LOCTEXT_NAMESPACE "FAchievementPluginModule"
 
 void FAchievementPluginModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	 // Register settings
+
+#if WITH_EDITOR
+	 // Register with settings system to appear in Project Settings
+	if (ISettingsModule* settingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+	{
+		settingsModule->RegisterSettings("Project", "Plugins", "AchievementPlugin",
+										 LOCTEXT("RuntimeSettingsName", "Achievement Plugin"),
+										 LOCTEXT("RuntimeSettingsDescription", "Configure Achievement Plugin settings"),
+										 GetMutableDefault<UAchievementPluginSettings>()
+		);
+	}
+#endif
 }
 
 void FAchievementPluginModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
+
+#if WITH_EDITOR
+		// Unregister from settings system
+	if (ISettingsModule* settingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+	{
+		settingsModule->UnregisterSettings("Project", "Plugins", "AchievementPlugin");
+	}
+#endif
 }
 
+#if WITH_EDITOR
 void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent)
 {
 	const FName changedPropertyName = propertyChangedEvent.GetPropertyName();
@@ -59,9 +84,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 			Savestuff = false;
 
 			// Force the package to be marked as dirty and save
-#if WITH_EDITOR
 			(void)MarkPackageDirty();
-#endif
 		}
 	}
 
@@ -83,6 +106,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		Super::PostEditChangeProperty(propertyChangedEvent);
 	}
 }
+#endif
 
 void UAchievementPluginSettings::UpdateRuntimeStats()
 {

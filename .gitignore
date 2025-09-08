@@ -302,3 +302,4 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/Saved/Config/CrashReportClient
