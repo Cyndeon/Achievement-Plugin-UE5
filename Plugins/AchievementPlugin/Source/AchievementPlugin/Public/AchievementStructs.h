@@ -1,29 +1,31 @@
 #pragma once
 
-#include "Misc/DateTime.h"    
+#include "CoreMinimal.h"
 #include "Engine/Texture2D.h"
+
+#include "AchievementStructs.generated.h" 
 
 USTRUCT(BlueprintType)
 // this struct has all the data that can be changed during runtime, ReadWrite for blueprints
-struct FAchievementProgress
+struct ACHIEVEMENTPLUGIN_API FAchievementProgress
 {
 	GENERATED_BODY()
 public:
 	// the "key" that connects this structs data to that of an achievement
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Public")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Public", SaveGame)
 	FString key = "";
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", meta = (ClampMin = "0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", meta = (ClampMin = "0"), SaveGame)
 	int32 progress = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public")
-	bool isUnlocked = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public")
-	FDateTime unlockedTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", SaveGame)
+	bool bIsUnlocked = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", SaveGame)
+	FString unlockedTime = "Never";
 };
 
 USTRUCT(BlueprintType)
 // this struct has all the data that is inside the developer settings, ReadOnly for blueprints
-struct FAchievementSettings
+struct ACHIEVEMENTPLUGIN_API FAchievementSettings
 {
 	GENERATED_BODY()
 

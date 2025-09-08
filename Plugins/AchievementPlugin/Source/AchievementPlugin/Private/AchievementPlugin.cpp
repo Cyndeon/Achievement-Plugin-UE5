@@ -3,7 +3,7 @@
 #include "AchievementPlugin.h"
 #include "Misc/MessageDialog.h"
 
-#include "SaveSystem.h"
+#include "USaveSystem.h"
 
 #define LOCTEXT_NAMESPACE "FAchievementPluginModule"
 
@@ -42,7 +42,30 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 #endif
 		}
 	}
-	// if a new achievement got added, set the key's name
+
+	if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, Savestuff))
+	{
+		if (Savestuff) // only when checked
+		{
+			// attempt to save data here:
+			FAchievementProgress testingThingy = FAchievementProgress("TestChiev", 64, true, FDateTime::Now().ToString());
+			// From any class that has access to the engine
+			if (UAchievementManager* achievementMgr = GEngine->GetEngineSubsystem<UAchievementManager>())
+			{
+				achievementMgr->GetSaveManager()->SaveProgressAsync(TArray<FAchievementProgress>{testingThingy}, defaultSlotName, defaultSlotIndex);
+			}
+
+			// Reset so it can be clicked again
+			Savestuff = false;
+
+			// Force the package to be marked as dirty and save
+#if WITH_EDITOR
+			(void)MarkPackageDirty();
+#endif
+		}
+	}
+
+	// if a new achievement got added, set the key's name to a default name
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, achievements))
 	{
 		for (auto& chiev : achievements)
@@ -54,6 +77,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 			}
 		}
 	}
+
 	else
 	{
 		Super::PostEditChangeProperty(propertyChangedEvent);
@@ -63,16 +87,17 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 void UAchievementPluginSettings::UpdateRuntimeStats()
 {
 	// this will create a new achievement and then set the runtime's stats to this stuff.
-	FAchievementProgress temp{ "test", 12,true,FDateTime::Now() };
+	const FAchievementProgress temp{ "test", 12,true, FDateTime::Now().ToString() };
 	const FString word = "key" + achievements.Num();
 	auto& chiev = achievements.Add(word, FAchievementSettings());
 	chiev.currentProgress = temp;
 }
 
-void UAchievementManager::Initialize(FSubsystemCollectionBase& Collection)
+void UAchievementManager::Initialize(FSubsystemCollectionBase& collection)
 {
-	Super::Initialize(Collection);
+	Super::Initialize(collection);
 
+	m_saveManager = NewObject<UAchievementSaveManager>(this);
 	// CALL LOAD SAVE DATA FUNCTION HERE
 }
 

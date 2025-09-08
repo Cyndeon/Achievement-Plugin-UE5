@@ -13,6 +13,12 @@ class UAchievementPluginBPLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Execute Sample function", Keywords = "AchievementPlugin sample test testing"), Category = "AchievementPluginTesting")
 	static float AchievementPluginSampleFunction(float Param);
+
+	// Functions to make:
+	// Set Chiev Progress (+ unlocking if requirement(s) are met
+	// Call Save Async
+	// Manually call Load
+	// Delete Save Data
 };
 
 
