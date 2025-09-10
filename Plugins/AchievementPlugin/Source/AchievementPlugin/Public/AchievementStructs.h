@@ -5,28 +5,39 @@
 
 #include "AchievementStructs.generated.h" 
 
+// this will allow the achievement structs to be "linked"
 USTRUCT(BlueprintType)
-// this struct has all the data that can be changed during runtime, ReadWrite for blueprints
-struct ACHIEVEMENTPLUGIN_API FAchievementProgress
+struct FLinkedStruct
 {
 	GENERATED_BODY()
 public:
-	FAchievementProgress(const int32 linkKey)
+	explicit FLinkedStruct(const int32 key = 0)
 	{
-		m_linkKey = linkKey;
+		m_linkID = key;
 	}
+	// sets a new link
+	void OverrideLinkID(const int32 newKey)
+	{
+		m_linkID = newKey;
+	}
+
+	int32 GetLinkID() const
+	{
+		return m_linkID;
+	}
+private:
+	UPROPERTY(SaveGame)
+	int32 m_linkID = 0;
+};
+
+
+USTRUCT(BlueprintType)
+// this struct has all the data that can be changed during runtime, ReadWrite for blueprints
+struct ACHIEVEMENTPLUGIN_API FAchievementProgress : public FLinkedStruct
+{
+	GENERATED_BODY()
+public:
 	FAchievementProgress() = default;
-	void OverrideLinkKey(const int32 newKey)
-	{
-		m_linkKey = newKey;
-	}
-	int32 GetLinkKey() const
-	{
-		return m_linkKey;
-	}
-	// the "key" that connects this structs data to that of an achievement
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Public", SaveGame)
-	FString key = "";
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", meta = (ClampMin = "0"), SaveGame)
 	int32 progress = 0;
@@ -34,17 +45,15 @@ public:
 	bool bIsUnlocked = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", SaveGame)
 	FString unlockedTime = "Never";
-
-private:
-	int32 m_linkKey = 0; // used for linking this with the Settings achievement part
 };
 
 USTRUCT(BlueprintType)
 // this struct has all the data that is inside the developer settings, ReadOnly for blueprints
-struct ACHIEVEMENTPLUGIN_API FAchievementSettings
+struct ACHIEVEMENTPLUGIN_API FAchievementSettings : public FLinkedStruct
 {
 	GENERATED_BODY()
 public:
+
 	// Platform-specific identifiers
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Steam",
 			  meta = (DisplayName = "Steam Achievement ID"))
@@ -71,7 +80,7 @@ public:
 	// Runtime data (visible only here but not editable, NOT saved to config)
 	UPROPERTY(VisibleAnywhere, Transient, Category = "Runtime Stats",
 			  meta = (DisplayName = "Current Progress (NOT LIVE)"))
-	FAchievementProgress currentProgress = FAchievementProgress(0);
+	FAchievementProgress currentProgress = FAchievementProgress();
 };
 
 USTRUCT(BlueprintType)

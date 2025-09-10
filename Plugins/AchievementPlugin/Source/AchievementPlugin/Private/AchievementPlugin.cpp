@@ -21,7 +21,7 @@ void FAchievementPluginModule::StartupModule()
 	 // Register with settings system to appear in Project Settings
 	if (ISettingsModule* settingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
-		settingsModule->RegisterSettings("Project", "Plugins", "AchievementPlugin",
+		settingsModule->RegisterSettings("Project", "Game", "AchievementPlugin",
 										 LOCTEXT("RuntimeSettingsName", "Achievement Plugin"),
 										 LOCTEXT("RuntimeSettingsDescription", "Configure Achievement Plugin settings"),
 										 GetMutableDefault<UAchievementPluginSettings>()
@@ -45,6 +45,7 @@ void FAchievementPluginModule::ShutdownModule()
 }
 
 #if WITH_EDITOR
+
 void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent)
 {
 	const FName changedPropertyName = propertyChangedEvent.GetPropertyName();
@@ -58,14 +59,6 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 
 			// Reset so it can be clicked again
 			loadRuntimeStatsButton = false;
-
-			// Force the package to be marked as dirty and save
-#if WITH_EDITOR
-			(void)MarkPackageDirty();
-
-			// Force immediate save
-			TryUpdateDefaultConfigFile();
-#endif
 		}
 	}
 
@@ -76,6 +69,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		{
 			// From any class that has access to the engine
 			auto* manager = UAchievementManager::Get();
+			manager->CleanupAchievements();
 			manager->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
 
 			// Reset so it can be clicked again
@@ -104,7 +98,6 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	{
 		if (progressStuff) // only when checked
 		{
-			// From any class that has access to the engine
 			auto* manager = UAchievementManager::Get();
 			const int count = manager->achievementsProgress.Num();
 			for (int i = 0; i < count; i++)
@@ -124,24 +117,38 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	{
 		const auto getter = UAchievementManager::Get();
 		getter->GetSaveManager()->SetSaveSlotSettings(defaultSaveSlotSettings);
+
+		AttemptSave();
 	}
 
-	// if a new achievement got added, set the key's name to a default name	
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, achievementsData))
 	{
-		for (auto& chiev : achievementsData)
+		// If a new achievement got added
+		if (propertyChangedEvent.ChangeType == EPropertyChangeType::ArrayAdd)
 		{
-			if (chiev.Key.IsEmpty())
+			// find it
+			for (auto& chiev : achievementsData)
 			{
-				auto newKey = FString(TEXT("Achievement ")) + FString::FromInt(achievementsData.Num());
-				chiev.Key = newKey;
+				if (chiev.Key.IsEmpty())
+				{
+					// generate an ID for itself and the Progress struct
+					// also increment the ID
+					const int linkID = m_nextLinkID++;
 
-				// auto* manager = UAchievementManager::Get();
-				// 
-				// FAchievementProgress& newProgress = manager->achievementsProgress.AddDefaulted_GetRef();
-				// newProgress.key = 
-				// UE_LOG(AchievementLog, Log, TEXT("Created a new achievement for ID '%s'"), *achievementPair.Key);
-				// break;
+					// generate a default name so it is obvious this is the next achievement
+					auto newKey = FString(TEXT("Achievement ")) + FString::FromInt(achievementsData.Num());
+					chiev.Key = newKey;
+					chiev.Value.OverrideLinkID(linkID);
+
+					auto* manager = UAchievementManager::Get();
+					FAchievementProgress& newProgress = manager->achievementsProgress.AddDefaulted_GetRef();
+					// set the link key for this one
+					newProgress.OverrideLinkID(linkID);
+					UE_LOG(AchievementLog, Log, TEXT("Created a new achievement with Link ID '%d'"), linkID);
+
+					AttemptSave();
+					break;
+				}
 			}
 		}
 	}
@@ -151,19 +158,35 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		Super::PostEditChangeProperty(propertyChangedEvent);
 	}
 }
+
+void UAchievementPluginSettings::AttemptSave()
+{
+	// Force the package to be marked as dirty and save
+	(void)MarkPackageDirty();
+
+	// Force immediate save
+	TryUpdateDefaultConfigFile();
+}
 #endif
 
 void UAchievementPluginSettings::UpdateRuntimeStats()
 {
-	// this will create a new achievement and then set the runtime stats variable to the actual stats
 	const auto progressData = UAchievementManager::Get()->achievementsProgress;
+	// look for the progress that has the same LinkID
 	for (const auto& progress : progressData)
 	{
-		if (achievementsData.Contains(progress.key))
+		for (auto& chiev : achievementsData)
 		{
-			achievementsData[progress.key].currentProgress = progress;
+			if (chiev.Value.GetLinkID() == progress.GetLinkID())
+			{
+				// set the currentProgress
+				chiev.Value.currentProgress = progress;
+				break;
+			}
 		}
 	}
+
+
 }
 
 UAchievementManager* UAchievementManager::Get()
@@ -224,22 +247,22 @@ void UAchievementManager::InitializeAchievements()
 	if (settings->achievementsData.Num() == achievementsProgress.Num())
 		return;
 
-
-	// Create a set of existing achievement IDs for O(1) lookup
-	TSet<FString> existingIDs;
+	// Create a set of existing Link IDs for O(1) lookup
+	TArray<int32> existingIDs = TArray<int32>();
 	for (const FAchievementProgress& progress : achievementsProgress)
 	{
-		existingIDs.Add(progress.key);
+		existingIDs.Add(progress.GetLinkID());
 	}
 
 	// Add missing achievements progress
 	const auto& data = settings->achievementsData;
 	for (const auto& achievementPair : data)
 	{
-		if (!existingIDs.Contains(achievementPair.Key))
+		const auto id = achievementPair.Value.GetLinkID();
+		if (!existingIDs.Contains(id))
 		{
 			FAchievementProgress& newProgress = achievementsProgress.AddDefaulted_GetRef();
-			newProgress.key = achievementPair.Key;
+			newProgress.OverrideLinkID(id);
 			UE_LOG(AchievementLog, Log, TEXT("Created a new achievement for ID '%s'"), *achievementPair.Key);
 		}
 	}
@@ -251,16 +274,16 @@ void UAchievementManager::CleanupAchievements()
 	UAchievementPluginSettings* settings = UAchievementPluginSettings::Get();
 
 	const int startingCount = achievementsProgress.Num();
+	TArray<int32> linkIDs = TArray<int32>();
+	for (const auto& chievs : settings->achievementsData)
+	{
+		linkIDs.Add(chievs.Value.GetLinkID());
+	}
 
 	// Remove any progress entries that don't exist in settings anymore
-	achievementsProgress.RemoveAll([settings](const FAchievementProgress& progress)
+	achievementsProgress.RemoveAll([&linkIDs](const FAchievementProgress& progress)
 								   {
-									   const bool bShouldRemove = !settings->achievementsData.Contains(progress.key);
-
-									   if (bShouldRemove)
-									   {
-										   UE_LOG(AchievementLog, Warning, TEXT("Removing progress for deleted achievement: %s"), *progress.key);
-									   }
+									   const bool bShouldRemove = !linkIDs.Contains(progress.GetLinkID());
 
 									   return bShouldRemove;
 								   });
