@@ -26,31 +26,41 @@ class UAchievementPluginSettings : public UObject
 	GENERATED_BODY()
 
 public:
+	// Only 1 should exist so this will allow you to get it 
 	static UAchievementPluginSettings* Get()
 	{
 		return GetMutableDefault<UAchievementPluginSettings>();
 	}
 
-	UPROPERTY(config, EditAnywhere, Category = "Achievements", meta = (DisplayName = "Default Profile Name",
-			  Tooltip = "The default name used for the saved profiles for achievements"))
-	FString defaultSlotName = "Achievements";
-	UPROPERTY(config, EditAnywhere, Category = "Achievements", meta = (DisplayName = "Default Save Slot",
-			  Tooltip = "The default name used for the save slots for achievements"))
-	int32 defaultSlotIndex = 0;
+	UPROPERTY(config, EditAnywhere, Category = "Achievements", meta = (DisplayName = "Default Save Slot Settings",
+			  Tooltip = "The defaults used for the saved profiles for achievementsData. Modifying this can cause old achievement progress to break"))
+	FSaveSlotSettings defaultSaveSlotSettings = FSaveSlotSettings();
 
-	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievements", meta = (DisplayName = "Achievements",
-			  ToolTip = "Key: Name used for modifying achievements in Blueprint Nodes, Value: Achievement settings"))
-	TMap<FString, FAchievementSettings> achievements;
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievements", meta = (DisplayName = "AchievementsData",
+			  ToolTip = "Key: Name used for modifying achievementsData in Blueprint Nodes, Value: Achievement settings"))
+	TMap<FString, FAchievementSettings> achievementsData;
+
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievements", meta = (DisplayName = "Cleanup Achievements on Load",
+			  ToolTip = "If enabled, will delete any achievement progress for achievements that no longer exist"))
+	bool bCleanupAchievements = true;
 
 #if WITH_EDITORONLY_DATA
 	// This is the "fake button"
 	UPROPERTY(EditAnywhere, Category = "Achievements", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
-			  Tooltip = "Enable this to update the runtime stats (progress) of the achievements"))
+			  Tooltip = "Enable this to update the runtime stats (progress) of the achievementsData"))
 	bool loadRuntimeStatsButton = false;
 
 	// TEMP
 	UPROPERTY(EditAnywhere, Category = "Achievements", Transient, meta = (DisplayName = "SAVE TEST TEMP"))
 	bool Savestuff = false;
+
+	// TEMP
+	UPROPERTY(EditAnywhere, Category = "Achievements", Transient, meta = (DisplayName = "LOAD TEST TEMP"))
+	bool loadstuff = false;
+
+	// TEMP
+	UPROPERTY(EditAnywhere, Category = "Achievements", Transient, meta = (DisplayName = "PROGESS TEST TEMP"))
+	bool progressStuff = false;
 #endif
 
 #if WITH_EDITOR
@@ -71,6 +81,7 @@ class ACHIEVEMENTPLUGIN_API UAchievementManager : public UEngineSubsystem
 	GENERATED_BODY()
 
 public:
+	static UAchievementManager* Get();
 	UAchievementSaveManager* GetSaveManager() const
 	{
 		return m_saveManager;
@@ -82,7 +93,12 @@ public:
 	// Override the Deinitialize function to add saving the progress
 	virtual void Deinitialize() override;
 
-	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "Achievements")
+	void InitializeAchievements();
+
+	// this will remove any achievements progress towards achievements that no longer exist
+	void CleanupAchievements();
+
+	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
 	TArray<FAchievementProgress> achievementsProgress;
 
 private:
