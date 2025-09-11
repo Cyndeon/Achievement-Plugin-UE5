@@ -45,8 +45,7 @@ void FAchievementPluginModule::ShutdownModule()
 }
 
 UAchievementPluginSettings::UAchievementPluginSettings()
-{
-}
+{}
 
 #if WITH_EDITOR
 
@@ -144,10 +143,9 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 					chiev.Key = newKey;
 					chiev.Value.OverrideLinkID(linkID);
 
+					// create the empty Achievement Progress as well
 					auto* manager = UAchievementManager::Get();
-					FAchievementProgress& newProgress = manager->achievementsProgress.AddDefaulted_GetRef();
-					// set the link key for this one
-					newProgress.OverrideLinkID(linkID);
+					manager->achievementsProgress.Add(linkID, FAchievementProgress());
 					UE_LOG(AchievementLog, Log, TEXT("Created a new achievement with Link ID '%d'"), linkID);
 
 					AttemptSave();
@@ -177,17 +175,16 @@ void UAchievementPluginSettings::UpdateRuntimeStats()
 {
 	const auto progressData = UAchievementManager::Get()->achievementsProgress;
 	// look for the progress that has the same LinkID
-	for (const auto& progress : progressData)
+	for (auto& chiev : achievementsData)
 	{
-		for (auto& chiev : achievementsData)
+		const auto* progress = progressData.Find(chiev.Value.GetLinkID());
+		if (progress != nullptr)
 		{
-			if (chiev.Value.GetLinkID() == progress.GetLinkID())
-			{
-				// set the currentProgress
-				chiev.Value.currentProgress = progress;
-				break;
-			}
+			// set the currentProgress
+			chiev.Value.UpdateProgressEditorOnly(*progress);
+			break;
 		}
+
 	}
 
 
@@ -260,23 +257,24 @@ void UAchievementManager::InitializeAchievements()
 	if (settings->achievementsData.Num() == achievementsProgress.Num())
 		return;
 
-	// Create a set of existing Link IDs for O(1) lookup
-	TArray<int32> existingIDs = TArray<int32>();
-	for (const FAchievementProgress& progress : achievementsProgress)
-	{
-		existingIDs.Add(progress.GetLinkID());
-	}
+	//// Create a set of existing Link IDs for O(1) lookup
+	//TArray<int32> existingIDs = TArray<int32>();
+	//for (const auto& progress : achievementsProgress)
+	//{
+	//	existingIDs.Add(progress.Key);
+	//}
 
 	// Add missing achievements progress
 	const auto& data = settings->achievementsData;
 	for (const auto& achievementPair : data)
 	{
 		const auto id = achievementPair.Value.GetLinkID();
-		if (!existingIDs.Contains(id))
+		// if the id doesn't exist in the achievements progress yet
+		if (!achievementsProgress.Contains(id))
 		{
-			FAchievementProgress& newProgress = achievementsProgress.AddDefaulted_GetRef();
-			newProgress.OverrideLinkID(id);
-			UE_LOG(AchievementLog, Log, TEXT("Created a new achievement for ID '%s'"), *achievementPair.Key);
+			// create an empty achievement with that id
+			achievementsProgress.Add(id, FAchievementProgress());
+			UE_LOG(AchievementLog, Log, TEXT("Created a new achievement Progress for '%s'"), *achievementPair.Key);
 		}
 	}
 }
@@ -293,13 +291,17 @@ void UAchievementManager::CleanupAchievements()
 		linkIDs.Add(chievs.Value.GetLinkID());
 	}
 
-	// Remove any progress entries that don't exist in settings anymore
-	achievementsProgress.RemoveAll([&linkIDs](const FAchievementProgress& progress)
-								   {
-									   const bool bShouldRemove = !linkIDs.Contains(progress.GetLinkID());
+	// used the UE5 documentation for this one https://dev.epicgames.com/documentation/en-us/unreal-engine/map-containers-in-unreal-engine#iterate
 
-									   return bShouldRemove;
-								   });
+	// Iterate with iterator so we can safely remove during iteration
+	for (auto it = achievementsProgress.CreateIterator(); it; ++it)
+	{
+		if (!linkIDs.Contains(it.Key()))
+		{
+			it.RemoveCurrent();
+		}
+	}
+
 	// log how many achievements were removed if any were
 	const int removedAchievements = startingCount - achievementsProgress.Num();
 	if (removedAchievements != 0)

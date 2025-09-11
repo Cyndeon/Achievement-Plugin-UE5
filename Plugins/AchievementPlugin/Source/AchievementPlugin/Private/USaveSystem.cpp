@@ -3,7 +3,7 @@
 #include "AchievementLogCategory.h"
 #include "AchievementPlugin.h"
 
-bool UAchievementSaveManager::SaveProgressAsync(const TArray<FAchievementProgress>& achievements)
+bool UAchievementSaveManager::SaveProgressAsync(const TMap<int32, FAchievementProgress>& achievements)
 {
 	if (m_bIsSaving == true)
 	{
@@ -27,7 +27,7 @@ bool UAchievementSaveManager::SaveProgressAsync(const TArray<FAchievementProgres
 	return true;
 }
 
-bool UAchievementSaveManager::SaveProgress(const TArray<FAchievementProgress>& achievements) const
+bool UAchievementSaveManager::SaveProgress(const TMap<int32, FAchievementProgress>& achievements) const
 {
 	if (m_bIsSaving)
 	{
@@ -53,9 +53,9 @@ bool UAchievementSaveManager::SaveProgress(const TArray<FAchievementProgress>& a
 	return bSaveSuccess;
 }
 
-TArray<FAchievementProgress> UAchievementSaveManager::LoadProgress() const
+TMap<int32, FAchievementProgress> UAchievementSaveManager::LoadProgress() const
 {
-	TArray<FAchievementProgress> loadedAchievements = TArray<FAchievementProgress>();
+	TMap<int32, FAchievementProgress> loadedAchievements = TMap<int32, FAchievementProgress>();
 
 	// Check if save file exists first
 	if (!UGameplayStatics::DoesSaveGameExist(m_saveSlotSettings.slotName, m_saveSlotSettings.slotIndex))
@@ -73,7 +73,7 @@ TArray<FAchievementProgress> UAchievementSaveManager::LoadProgress() const
 	}
 
 	// copy over the loaded achievementsData
-	loadedAchievements = loadedSave->achievementsData;
+	loadedAchievements = loadedSave->achievementProgressSave;
 
 	UE_LOG(AchievementLog, Log, TEXT("Successfully loaded %d achievementProgress"), loadedAchievements.Num());
 

@@ -112,7 +112,8 @@ public:
 	void CleanupAchievements();
 
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
-	TArray<FAchievementProgress> achievementsProgress;
+	// the 'Key' is the LinkID that the achievementData has
+	TMap<int32, FAchievementProgress> achievementsProgress;
 
 private:
 	UPROPERTY()

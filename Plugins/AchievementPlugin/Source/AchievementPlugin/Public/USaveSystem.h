@@ -13,12 +13,12 @@ class ACHIEVEMENTPLUGIN_API UAchievementSave : public USaveGame
 
 public:
 	// Constructor that takes reference to avoid copying
-	void SetData(const TArray<FAchievementProgress>& inData)
+	void SetData(const TMap<int32, FAchievementProgress>& inData)
 	{
-		achievementsData = inData;
+		achievementProgressSave = inData;
 	}
 	UPROPERTY(SaveGame)
-	TArray<FAchievementProgress> achievementsData;
+	TMap<int32, FAchievementProgress> achievementProgressSave;
 };
 
 // note: this class only exists in UAchievementManager (by default)
@@ -33,14 +33,14 @@ public:
 	}
 
 	// returns whether the save was successful
-	bool SaveProgressAsync(const TArray<FAchievementProgress>& achievements);
+	bool SaveProgressAsync(const TMap<int32, FAchievementProgress>& achievements);
 
 	// returns whether the save was successful
 	// Note: For saves during runtime, use SaveProgressAsync instead!
-	bool SaveProgress(const TArray<FAchievementProgress>& achievements) const;
+	bool SaveProgress(const TMap<int32, FAchievementProgress>& achievements) const;
 
 	// returns the loaded achievementsData' progress
-	TArray<FAchievementProgress> LoadProgress() const;
+	TMap<int32, FAchievementProgress> LoadProgress() const;
 
 	void SetSaveSlotSettings(const FSaveSlotSettings& newSettings);
 
@@ -49,6 +49,4 @@ private:
 
 	bool m_bIsSaving = false;
 	FSaveSlotSettings m_saveSlotSettings;
-
-	TArray<FAchievementProgress> m_currentAchievements;
 };

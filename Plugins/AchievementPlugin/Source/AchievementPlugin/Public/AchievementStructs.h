@@ -33,7 +33,7 @@ private:
 
 USTRUCT(BlueprintType)
 // this struct has all the data that can be changed during runtime, ReadWrite for blueprints
-struct ACHIEVEMENTPLUGIN_API FAchievementProgress : public FLinkedStruct
+struct ACHIEVEMENTPLUGIN_API FAchievementProgress
 {
 	GENERATED_BODY()
 public:
@@ -53,6 +53,10 @@ struct ACHIEVEMENTPLUGIN_API FAchievementSettings : public FLinkedStruct
 {
 	GENERATED_BODY()
 public:
+	void UpdateProgressEditorOnly(const FAchievementProgress& progress)
+	{
+		m_currentProgress = progress;
+	}
 
 	// Platform-specific identifiers
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Steam",
@@ -77,10 +81,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Public", meta = (ClampMin = "0"))
 	int32 progressGoal = 1;
 
+private:
 	// Runtime data (visible only here but not editable, NOT saved to config)
 	UPROPERTY(VisibleAnywhere, Transient, Category = "Runtime Stats",
 			  meta = (DisplayName = "Current Progress (NOT LIVE)"))
-	FAchievementProgress currentProgress = FAchievementProgress();
+	FAchievementProgress m_currentProgress = FAchievementProgress();
 };
 
 USTRUCT(BlueprintType)
