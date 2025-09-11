@@ -16,18 +16,27 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Achievement Progress", Keywords = "Set Achievement Progress"), Category = "AchievementPlugin")
 	static bool SetAchievementProgress(
-		UPARAM(meta = (GetOptions = "GetAchievementNames"))
-		FString& achievementName,
+		UPARAM(meta = (GetOptions = "UAchievementPluginBPLibrary.GetAchievementNames"))
+		const FString& achievementName,
 		int32 increase);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress Async", Keywords = "Save Achievement Progress Async"), Category = "AchievementPlugin")
-	static bool SaveAchievementProgressAsync();
+	static bool SaveAchievementProgressAsync()
+		{
+		return true;
+	};
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress", Keywords = "Save Achievement Progress"), Category = "AchievementPlugin")
-	static bool SaveAchievementProgress();
+	static bool SaveAchievementProgress()
+	{
+		return true;
+	};
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete Achievement Progress", Keywords = "Delete Achievement Progress"), Category = "AchievementPlugin")
-	static bool DeleteAchievementSaveData();
+	static bool DeleteAchievementSaveData()
+	{
+		return true;
+	};
 };
 
 
