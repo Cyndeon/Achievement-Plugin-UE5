@@ -44,6 +44,10 @@ void FAchievementPluginModule::ShutdownModule()
 #endif
 }
 
+UAchievementPluginSettings::UAchievementPluginSettings()
+{
+}
+
 #if WITH_EDITOR
 
 void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent)
@@ -187,6 +191,15 @@ void UAchievementPluginSettings::UpdateRuntimeStats()
 	}
 
 
+}
+
+void UAchievementPluginSettings::CacheAchievementNamesArray()
+{
+	m_cachedAchievementNames.Empty();
+	for (const auto& achievement : achievementsData)
+	{
+		m_cachedAchievementNames.Add(achievement.Key);
+	}
 }
 
 UAchievementManager* UAchievementManager::Get()

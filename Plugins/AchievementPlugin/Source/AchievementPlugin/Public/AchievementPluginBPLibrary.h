@@ -10,15 +10,24 @@ UCLASS()
 class UAchievementPluginBPLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
+public:
+	UFUNCTION(BlueprintCallable)
+	static TArray<FString> GetAchievementNames();
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Execute Sample function", Keywords = "AchievementPlugin sample test testing"), Category = "AchievementPluginTesting")
-	static float AchievementPluginSampleFunction(float Param);
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Achievement Progress", Keywords = "Set Achievement Progress"), Category = "AchievementPlugin")
+	static bool SetAchievementProgress(
+		UPARAM(meta = (GetOptions = "GetAchievementNames"))
+		FString& achievementName,
+		int32 increase);
 
-	// Functions to make:
-	// Set Chiev Progress (+ unlocking if requirement(s) are met
-	// Call Save Async
-	// Manually call Load
-	// Delete Save Data
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress Async", Keywords = "Save Achievement Progress Async"), Category = "AchievementPlugin")
+	static bool SaveAchievementProgressAsync();
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress", Keywords = "Save Achievement Progress"), Category = "AchievementPlugin")
+	static bool SaveAchievementProgress();
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete Achievement Progress", Keywords = "Delete Achievement Progress"), Category = "AchievementPlugin")
+	static bool DeleteAchievementSaveData();
 };
 
 

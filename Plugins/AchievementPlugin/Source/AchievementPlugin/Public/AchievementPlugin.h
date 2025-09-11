@@ -26,9 +26,14 @@ class UAchievementPluginSettings : public UObject
 	GENERATED_BODY()
 
 public:
+	UAchievementPluginSettings();
 	static UAchievementPluginSettings* Get()
 	{
 		return GetMutableDefault<UAchievementPluginSettings>();
+	}
+	const TArray<FString>& GetAchievementNames()
+	{
+		return m_cachedAchievementNames;
 	}
 
 	UPROPERTY(config, EditAnywhere, Category = "Achievements", meta = (DisplayName = "Default Save Slot Settings",
@@ -73,9 +78,11 @@ public:
 
 private:
 	void UpdateRuntimeStats();
+	void CacheAchievementNamesArray();
+
+	TArray<FString> m_cachedAchievementNames = TArray<FString>();
 	// this is only used to "generate" the next ID for achievements
-	// MAKE NOT VISIBLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	UPROPERTY(VisibleAnywhere, config)
+	UPROPERTY(config)
 	int32 m_nextLinkID = 1;
 };
 
