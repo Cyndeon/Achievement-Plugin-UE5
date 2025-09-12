@@ -7,36 +7,45 @@
 
 
 UCLASS()
-class UAchievementPluginBPLibrary : public UBlueprintFunctionLibrary
+class ACHIEVEMENTPLUGIN_API UAchievementPluginBPLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
 public:
-	UFUNCTION(BlueprintCallable)
-	static TArray<FString> GetAchievementNames();
+	//UFUNCTION(BlueprintCallable)
+	//static TArray<FString> GetAchievementNames();
+
+	//UFUNCTION(BlueprintCallable, BlueprintInternalUseOnly, Category = "Parameter Collection",
+	//		  meta = (DisplayName = "Set Value as Bool",
+	//		  AutoCreateRefTerm = "achievementName",
+	//		  GetOptions = "UAchievementPluginBPLibrary.GetAchievementNames"))
+	//bool SetAchievementProgress(const FString& achievementName, int32 increase);
+
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Achievement Progress", Keywords = "Set Achievement Progress"), Category = "AchievementPlugin")
 	static bool SetAchievementProgress(
-		UPARAM(meta = (GetOptions = "UAchievementPluginBPLibrary.GetAchievementNames"))
-		const FString& achievementName,
+		const FString& achievementID,
 		int32 increase);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress Async", Keywords = "Save Achievement Progress Async"), Category = "AchievementPlugin")
-	static bool SaveAchievementProgressAsync()
-		{
-		return true;
-	};
+	static bool SaveAchievementProgressAsync();
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress", Keywords = "Save Achievement Progress"), Category = "AchievementPlugin")
-	static bool SaveAchievementProgress()
-	{
-		return true;
-	};
+	static bool SaveAchievementProgress();
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete Achievement Progress", Keywords = "Delete Achievement Progress"), Category = "AchievementPlugin")
-	static bool DeleteAchievementSaveData()
-	{
-		return true;
-	};
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Load Achievement Progress", Keywords = "Load Achievement Progress", 
+			  Tooltip = "This is already done at the start of the game, however, this will force reload it without saving, be careful!"), Category = "AchievementPlugin")
+	static bool LoadAchievementProgress();
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete Single Achievement Progress", Keywords = "Delete Single Achievement Progress",
+			  Tooltip = "Delete's given achievement's progress. This cannot be undone!"), Category = "AchievementPlugin")
+	static bool DeleteSingleAchievementProgress(const FString& achievementID);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete All Achievement Progress", Keywords = "Delete Achievement Progress",
+			  Tooltip="Delete's ALL achievements progress. Will empty all progress but keep the file. This cannot be undone!"), Category = "AchievementPlugin")
+	static bool DeleteAllAchievementProgress();
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Save Slot Index", Keywords = "Save Slot Index"), Category = "AchievementPlugin")
+	static void SetActiveSaveSlotIndex(int32 newIndex);
 };
 
 

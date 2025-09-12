@@ -26,7 +26,7 @@ public:
 		return m_linkID;
 	}
 private:
-	UPROPERTY(SaveGame)
+	UPROPERTY(config)
 	int32 m_linkID = 0;
 };
 
@@ -42,7 +42,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", meta = (ClampMin = "0"), SaveGame)
 	int32 progress = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", SaveGame)
-	bool bIsUnlocked = false;
+	bool bIsAchievementUnlocked = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", SaveGame)
 	FString unlockedTime = "Never";
 };

@@ -31,7 +31,7 @@ bool UAchievementSaveManager::SaveProgress(const TMap<int32, FAchievementProgres
 {
 	if (m_bIsSaving)
 	{
-		UE_LOG(AchievementLog, Warning, TEXT("Already saving Async, blocking save!"));
+		UE_LOG(AchievementLog, Warning, TEXT("Already saving Async, blocking Sync save!"));
 		return false;
 	}
 
@@ -42,8 +42,8 @@ bool UAchievementSaveManager::SaveProgress(const TMap<int32, FAchievementProgres
 
 	if (bSaveSuccess)
 	{
-		UE_LOG(AchievementLog, Log, TEXT("Synchronously saved %d achievementsData to slot: %s"),
-			   achievements.Num(), *m_saveSlotSettings.slotName);
+		UE_LOG(AchievementLog, Log, TEXT("Synchronously saved %d achievementsData to '%s', index '%d'"),
+			   achievements.Num(), *m_saveSlotSettings.slotName, m_saveSlotSettings.slotIndex);
 	}
 	else
 	{
@@ -85,13 +85,27 @@ void UAchievementSaveManager::SetSaveSlotSettings(const FSaveSlotSettings& newSe
 	m_saveSlotSettings = newSettings;
 
 #if WITH_EDITOR
-	// in case the stats get set while editor is active, also set the developer settings to the same values
+	// in case the stats get set while editor is active, also set the developer settings to the same values, just for debugging purposes
 	UAchievementPluginSettings* settings = UAchievementPluginSettings::Get();
 	if (settings->defaultSaveSlotSettings.slotName != newSettings.slotName || settings->defaultSaveSlotSettings.slotIndex != newSettings.slotIndex)
 		settings->defaultSaveSlotSettings = newSettings;
 #endif
 
 	UE_LOG(AchievementLog, Log, TEXT("Set save slot name to '%s' and Index to %d"), *newSettings.slotName, newSettings.slotIndex);
+}
+
+void UAchievementSaveManager::SetSaveSlotIndex(const int32 newIndex)
+{
+	m_saveSlotSettings.slotIndex = newIndex;
+
+#if WITH_EDITOR
+	// in case the stats get set while editor is active, also set the developer settings to the same values, just for debugging purposes
+	UAchievementPluginSettings* settings = UAchievementPluginSettings::Get();
+	if (settings->defaultSaveSlotSettings.slotIndex != newIndex)
+		settings->defaultSaveSlotSettings.slotIndex = newIndex;;
+#endif
+
+	UE_LOG(AchievementLog, Log, TEXT("Set save slot index to %d"), newIndex);
 }
 
 void UAchievementSaveManager::OnAsyncSaveComplete(const FString& slotName, const int32 userIndex, const bool bSuccess)

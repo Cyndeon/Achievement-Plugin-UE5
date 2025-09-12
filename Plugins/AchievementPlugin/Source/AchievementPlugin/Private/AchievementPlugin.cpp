@@ -72,7 +72,6 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		{
 			// From any class that has access to the engine
 			auto* manager = UAchievementManager::Get();
-			manager->CleanupAchievements();
 			manager->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
 
 			// Reset so it can be clicked again
@@ -139,7 +138,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 					const int linkID = m_nextLinkID++;
 
 					// generate a default name so it is obvious this is the next achievement
-					auto newKey = FString(TEXT("Achievement ")) + FString::FromInt(achievementsData.Num());
+					auto newKey = FString(TEXT("Achievement_")) + FString::FromInt(achievementsData.Num());
 					chiev.Key = newKey;
 					chiev.Value.OverrideLinkID(linkID);
 
@@ -210,6 +209,19 @@ UAchievementManager* UAchievementManager::Get()
 	return nullptr;
 }
 
+UAchievementSaveManager* UAchievementManager::GetSaveManager() const
+{
+	{
+		if (m_saveManager)
+			return m_saveManager;
+		else
+		{
+			UE_LOG(AchievementLog, Fatal, TEXT("UAchievementSaveManager is null! Returning nullptr."));
+			return nullptr;
+		}
+	}
+}
+
 void UAchievementManager::Initialize(FSubsystemCollectionBase& collection)
 {
 	Super::Initialize(collection);
@@ -256,13 +268,6 @@ void UAchievementManager::InitializeAchievements()
 	// if there are as many achievements as there are progress for them, return
 	if (settings->achievementsData.Num() == achievementsProgress.Num())
 		return;
-
-	//// Create a set of existing Link IDs for O(1) lookup
-	//TArray<int32> existingIDs = TArray<int32>();
-	//for (const auto& progress : achievementsProgress)
-	//{
-	//	existingIDs.Add(progress.Key);
-	//}
 
 	// Add missing achievements progress
 	const auto& data = settings->achievementsData;

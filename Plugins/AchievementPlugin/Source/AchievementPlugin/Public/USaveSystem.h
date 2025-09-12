@@ -43,6 +43,7 @@ public:
 	TMap<int32, FAchievementProgress> LoadProgress() const;
 
 	void SetSaveSlotSettings(const FSaveSlotSettings& newSettings);
+	void SetSaveSlotIndex(const int32 newIndex);
 
 private:
 	void OnAsyncSaveComplete(const FString& slotName, const int32 userIndex, bool bSuccess);

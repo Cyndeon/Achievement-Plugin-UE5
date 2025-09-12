@@ -95,10 +95,7 @@ class ACHIEVEMENTPLUGIN_API UAchievementManager : public UEngineSubsystem
 
 public:
 	static UAchievementManager* Get();
-	UAchievementSaveManager* GetSaveManager() const
-	{
-		return m_saveManager;
-	}
+	UAchievementSaveManager* GetSaveManager() const;
 
 	// Override the Initialize function to add loading the progress
 	virtual void Initialize(FSubsystemCollectionBase& collection) override;
