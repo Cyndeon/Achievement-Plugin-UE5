@@ -54,43 +54,35 @@ int32 GetLinkIDByAchievementID(const FString& achievementName)
 
 bool UAchievementPluginBPLibrary::SetAchievementProgress(const FString& achievementID, const int32 increase)
 {
+	const auto id = GetLinkIDByAchievementID(achievementID);
 	if (auto* achievementProgress = UAchievementManager::Get()->achievementsProgress.Find(id))
-{
-	// if it was already unlocked, return early
-	if (achievementProgress->bIsAchievementUnlocked)
 	{
-		UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked, skipping."), *achievementID);
+		// if it was already unlocked, return early
+		if (achievementProgress->bIsAchievementUnlocked)
+		{
+			UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked, skipping."), *achievementID);
+			return true;
+		}
+
+		// if goal has been reached, unlock it
+		const auto goal = UAchievementPluginSettings::Get()->achievementsData.Find(achievementID)->progressGoal;
+
+		if (achievementProgress->progress + increase >= goal)
+		{
+			achievementProgress->progress = goal;
+			achievementProgress->bIsAchievementUnlocked = true;
+
+
+			// CALL UNLOCK ON PLATFORMS HERE =========================================================================
+		}
+		else
+			achievementProgress->progress += increase;
+
+		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%d'"), *achievementID, achievementProgress->progress);
 		return true;
 	}
-
-	// if goal has been reached, unlock it
-	const auto goal = UAchievementPluginSettings::Get()->achievementsData.Find(achievementID)->progressGoal;
-
-	if (achievementProgress->progress + increase >= goal)
-	{
-		achievementProgress->progress = goal;
-		achievementProgress->bIsAchievementUnlocked = true;
-
-
-		// CALL UNLOCK ON PLATFORMS HERE =========================================================================
-	}
-	else
-		achievementProgress->progress += increase;
-
-	UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%d'"), *achievementID, achievementProgress->progress);
-	return true;
-}
-UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the Link ID '%d'"), id);
-return false;
-
-	// WIP
-
-	/*if (auto* manager = UAchievementManager::Get())
-	{
-		return manager->SetAchievementProgress(GetLinkIDByAchievementID(achievementID));
-	}
-	LogFatalMissingManager();
-	return false;*/
+	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the Link ID '%d'"), id);
+	return false;
 }
 
 bool UAchievementPluginBPLibrary::SaveAchievementProgressAsync()
