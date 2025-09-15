@@ -1,4 +1,6 @@
 // Some copyright should be here...
+
+using System.IO;
 using UnrealBuildTool;
 public class AchievementPlugin : ModuleRules
 {
@@ -60,5 +62,14 @@ public class AchievementPlugin : ModuleRules
                 // ... add any modules that your module loads dynamically here ...
             }
         );
+
+        // only works for win64, add more options later!
+        string SteamPath = Path.Combine(ModuleDirectory, "ThirdParty", "steamworks_sdk_162", "sdk");
+
+        PublicIncludePaths.Add(Path.Combine(SteamPath, "sdk", "public"));
+        PublicAdditionalLibraries.Add(Path.Combine(SteamPath, "redistributable_bin", "win64", "steam_api64.lib"));
+
+        RuntimeDependencies.Add("$(TargetOutputDir)/steam_api64.dll",
+	        Path.Combine(SteamPath, "redistributable_bin", "win64", "steam_api64.dll"));
     }
 }

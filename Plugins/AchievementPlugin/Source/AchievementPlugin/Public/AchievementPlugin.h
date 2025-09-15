@@ -11,6 +11,14 @@
 
 #include "AchievementPlugin.generated.h"
 
+UENUM()
+enum EAchievementPlatforms : uint8
+{
+	LOCALONLY = 0,
+	STEAM,
+	EOS
+};
+
 class FAchievementPluginModule : public IModuleInterface
 {
 public:
@@ -35,6 +43,14 @@ public:
 	{
 		return m_cachedAchievementNames;
 	}
+	TEnumAsByte<EAchievementPlatforms> GetAchievementPlatform() const
+	{
+		return m_achievementPlatform;
+	}
+	int32 GetSteamAppID() const
+	{
+		return m_steamAppID;
+	}
 
 	UPROPERTY(config, EditAnywhere, Category = "Achievements", meta = (DisplayName = "Default Save Slot Settings",
 			  Tooltip = "The defaults used for the saved profiles for achievementsData. Modifying this can cause old achievement progress to break"))
@@ -51,20 +67,18 @@ public:
 
 #if WITH_EDITORONLY_DATA
 	// This is the "button"
-	UPROPERTY(EditAnywhere, Category = "Achievements", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
+	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
 			  Tooltip = "Enable this to update the runtime stats (progress) of the achievementsData"))
 	bool loadRuntimeStatsButton = false;
 
-	// TEMP
-	UPROPERTY(EditAnywhere, Category = "Achievements", Transient, meta = (DisplayName = "SAVE TEST TEMP"))
-	bool Savestuff = false;
+	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "Force Save Achievments"))
+	bool forceSaveAchievements = false;
+
+	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "Force Load Achievement Progress"))
+	bool forceLoadAchievementProgress = false;
 
 	// TEMP
-	UPROPERTY(EditAnywhere, Category = "Achievements", Transient, meta = (DisplayName = "LOAD TEST TEMP"))
-	bool loadstuff = false;
-
-	// TEMP
-	UPROPERTY(EditAnywhere, Category = "Achievements", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))
+	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))
 	bool progressStuff = false;
 #endif
 
@@ -74,16 +88,31 @@ public:
 
 	// marks the package dirty and attempts to save the config file
 	void AttemptSave();
-#endif
 
 private:
 	void UpdateRuntimeStats();
-	void CacheAchievementNamesArray();
-
-	TArray<FString> m_cachedAchievementNames = TArray<FString>();
+#endif
 	// this is only used to "generate" the next ID for achievements
 	UPROPERTY(config)
 	int32 m_nextLinkID = 1;
+private:
+	void CacheAchievementNamesArray();
+
+	UFUNCTION()
+	bool IsSteamPlatform() const
+	{
+		return m_achievementPlatform == EAchievementPlatforms::STEAM;
+	}
+
+	UPROPERTY(EditAnywhere, config, Category = "Achievements Settings", meta = (DisplayName = "Achievement Platform"))
+	TEnumAsByte<EAchievementPlatforms> m_achievementPlatform;
+
+	UPROPERTY(EditAnywhere, config, Category = "Achievements Settings", meta = (DisplayName = "Steam App ID", EditCondition = "IsSteamPlatform", EditConditionHides))
+	int32 m_steamAppID;
+
+	// just to make sure that this does not save
+	UPROPERTY(Transient)
+	TArray<FString> m_cachedAchievementNames = TArray<FString>();
 };
 
 class UAchievementSaveManager;
@@ -103,15 +132,18 @@ public:
 	// Override the Deinitialize function to add saving the progress
 	virtual void Deinitialize() override;
 
+	// creates Progress for any achievements without them
 	void InitializeAchievements();
 
 	// this will remove any achievements progress towards achievements that no longer exist
 	void CleanupAchievements();
 
+	// Sets the progress for the achievement, including updating platforms
+	bool SetAchievementProgress(int32 achievementID);
+
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
 	// the 'Key' is the LinkID that the achievementData has
 	TMap<int32, FAchievementProgress> achievementsProgress;
-
 private:
 	UPROPERTY()
 	UAchievementSaveManager* m_saveManager;

@@ -305,3 +305,8 @@ healthchecksdb
 /Saved/Config/CrashReportClient
 Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini
 Saved/SaveGames/Achievements.sav
+/Saved/Logs
+/Saved/SourceControl
+Saved/Config/WindowsEditor/GameUserSettings.ini
+Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini
+Saved/AutoScreenshot.png
