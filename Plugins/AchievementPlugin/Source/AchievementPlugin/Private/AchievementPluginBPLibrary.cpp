@@ -18,25 +18,15 @@ UAchievementPluginBPLibrary::UAchievementPluginBPLibrary(const FObjectInitialize
 
 }
 
-void LogFatalMissingManager()
+UAchievementManager* GetManager()
 {
-	UE_LOG(AchievementLog, Fatal, TEXT("FATAL: UAchievementPluginSettings returns a nullptr!"));
-}
-
-int32 GetLinkIDByAchievementID(const FString& achievementName)
-{
-	if (const auto* settings = UAchievementPluginSettings::Get())
+	if (auto* manager = UAchievementManager::Get())
 	{
-		// check if the achievement name exists
-		if (const auto* achievement = settings->achievementsData.Find(achievementName))
-		{
-			return achievement->GetLinkID();
-		}
-		UE_LOG(AchievementLog, Error, TEXT("Achievement with the name '%s' cannot be found!"), *achievementName);
-		return 0;
+		return manager;
 	}
-	UE_LOG(AchievementLog, Fatal, TEXT("FATAL: Cannot find UAchievementPluginSettings!"));
-	return 0;
+	UE_LOG(AchievementLog, Fatal, TEXT("FATAL: UAchievementPluginSettings returns a nullptr!"));
+	return nullptr;
+
 }
 //TArray<FString> UAchievementPluginBPLibrary::GetAchievementNames()
 //{
@@ -52,82 +42,42 @@ int32 GetLinkIDByAchievementID(const FString& achievementName)
 //	return TArray<FString>();
 //}
 
-bool UAchievementPluginBPLibrary::SetAchievementProgress(const FString& achievementID, const int32 increase)
+bool UAchievementPluginBPLibrary::SetAchievementProgress(const FString& achievementId, const int32 increase)
 {
-	const auto id = GetLinkIDByAchievementID(achievementID);
-	if (auto* achievementProgress = UAchievementManager::Get()->achievementsProgress.Find(id))
-	{
-		// if it was already unlocked, return early
-		if (achievementProgress->bIsAchievementUnlocked)
-		{
-			UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked, skipping."), *achievementID);
-			return true;
-		}
-
-		// if goal has been reached, unlock it
-		const auto goal = UAchievementPluginSettings::Get()->achievementsData.Find(achievementID)->progressGoal;
-
-		if (achievementProgress->progress + increase >= goal)
-		{
-			achievementProgress->progress = goal;
-			achievementProgress->bIsAchievementUnlocked = true;
-
-
-			// CALL UNLOCK ON PLATFORMS HERE =========================================================================
-		}
-		else
-			achievementProgress->progress += increase;
-
-		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%d'"), *achievementID, achievementProgress->progress);
-		return true;
-	}
-	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the Link ID '%d'"), id);
-	return false;
+	return GetManager()->IncreaseAchievementProgress(achievementId, increase);
 }
 
 bool UAchievementPluginBPLibrary::SaveAchievementProgressAsync()
 {
-	if (const auto* manager = UAchievementManager::Get())
-	{
-		return manager->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
-	}
-	LogFatalMissingManager();
-	return false;
+	const auto* manager = GetManager();
+	return GetManager()->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
 }
 
 bool UAchievementPluginBPLibrary::SaveAchievementProgress()
 {
-	if (const auto* manager = UAchievementManager::Get())
-	{
-		return manager->GetSaveManager()->SaveProgress(manager->achievementsProgress);
-	}
-	LogFatalMissingManager();
-	return false;
+	const auto* manager = GetManager();
+	return manager->GetSaveManager()->SaveProgress(manager->achievementsProgress);
 }
 
 bool UAchievementPluginBPLibrary::LoadAchievementProgress()
 {
-	if (auto* manager = UAchievementManager::Get())
-	{
-		manager->achievementsProgress = manager->GetSaveManager()->LoadProgress();
+	auto* manager = GetManager();
+	manager->achievementsProgress = manager->GetSaveManager()->LoadProgress();
 
-		// remove any deleted achievements
-		manager->CleanupAchievements();
+	// remove any deleted achievements
+	manager->CleanupAchievements();
 
-		// add achievement progress for any new achievements that weren't there before
-		manager->InitializeAchievements();
+	// add achievement progress for any new achievements that weren't there before
+	manager->InitializeAchievements();
 
-		return true;
-	}
-	LogFatalMissingManager();
-	return false;
+	return true;
 }
 
 bool UAchievementPluginBPLibrary::DeleteSingleAchievementProgress(const FString& achievementID)
 {
-	if (auto* manager = UAchievementManager::Get())
+	if (auto* manager = GetManager())
 	{
-		const auto linkID = GetLinkIDByAchievementID(achievementID);
+		const auto linkID = UAchievementPluginSettings::Get()->GetLinkIDByAchievementID(achievementID);
 		if (manager->achievementsProgress.Find(linkID))
 		{
 			// set the element to be empty
@@ -139,13 +89,12 @@ bool UAchievementPluginBPLibrary::DeleteSingleAchievementProgress(const FString&
 		UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the Link ID '%d'"), linkID);
 		return false;
 	}
-	LogFatalMissingManager();
 	return false;
 }
 
 bool UAchievementPluginBPLibrary::DeleteAllAchievementProgress()
 {
-	if (auto* manager = UAchievementManager::Get())
+	if (auto* manager = GetManager())
 	{
 		auto& progress = manager->achievementsProgress;
 		const int32 deletedCount = progress.Num();
@@ -156,16 +105,11 @@ bool UAchievementPluginBPLibrary::DeleteAllAchievementProgress()
 		UE_LOG(AchievementLog, Log, TEXT("Deleted all achievement progress for' %d' entries"), deletedCount);
 		return true;
 	}
-	LogFatalMissingManager();
 	return false;
 }
 
 void UAchievementPluginBPLibrary::SetActiveSaveSlotIndex(const int32 newIndex)
 {
-	if (const auto* manager = UAchievementManager::Get())
-	{
-		manager->GetSaveManager()->SetSaveSlotIndex(newIndex);
-		return;
-	}
-	LogFatalMissingManager();
+	GetManager()->GetSaveManager()->SetSaveSlotIndex(newIndex);
+	return;
 }

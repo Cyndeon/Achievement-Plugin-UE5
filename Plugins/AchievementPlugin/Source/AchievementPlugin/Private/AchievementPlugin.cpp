@@ -166,6 +166,17 @@ void FAchievementPluginModule::ShutdownModule()
 	}
 }
 
+int32 UAchievementPluginSettings::GetLinkIDByAchievementID(const FString& achievementId)
+{
+	// check if the achievement name exists
+	if (const auto* achievement = achievementsData.Find(achievementId))
+	{
+		return achievement->GetLinkID();
+	}
+	UE_LOG(AchievementLog, Error, TEXT("Achievement with the name '%s' cannot be found!"), *achievementId);
+	return 0;
+}
+
 #if WITH_EDITOR
 
 void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent)
@@ -424,38 +435,37 @@ void UAchievementManager::CleanupAchievements()
 		UE_LOG(AchievementLog, Log, TEXT("Cleanup finished, deleted achievement progress for %d achievements."), removedAchievements)
 }
 
-bool UAchievementManager::SetAchievementProgress(int32 achievementID)
+bool UAchievementManager::IncreaseAchievementProgress(const FString& achievementId, const int32 increase)
 {
-	// WIP
+	const auto linkId = UAchievementPluginSettings::Get()->GetLinkIDByAchievementID(achievementId);
+	if (auto* achievementProgress = achievementsProgress.Find(linkId))
+	{
+		// if it was already unlocked, return
+		if (achievementProgress->bIsAchievementUnlocked)
+		{
+			UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked, skipping."), *achievementId);
+			return true;
+		}
+
+		// if goal has been reached, unlock it
+		const auto goal = UAchievementPluginSettings::Get()->achievementsData.Find(achievementId)->progressGoal;
+
+		if (achievementProgress->progress + increase >= goal)
+		{
+			achievementProgress->progress = goal;
+			achievementProgress->bIsAchievementUnlocked = true;
+
+
+			// CALL UNLOCK ON PLATFORMS HERE =========================================================================
+		}
+		else
+			achievementProgress->progress += increase;
+
+		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%d'"), *achievementId, achievementProgress->progress);
+		return true;
+	}
+	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the '%s'"), *achievementId);
 	return false;
-	//if (auto* achievementProgress = UAchievementManager::Get()->achievementsProgress.Find(id))
-	//{
-	//	// if it was already unlocked, return early
-	//	if (achievementProgress->bIsAchievementUnlocked)
-	//	{
-	//		UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked, skipping."), *achievementID);
-	//		return true;
-	//	}
-
-	//	// if goal has been reached, unlock it
-	//	const auto goal = UAchievementPluginSettings::Get()->achievementsData.Find(achievementID)->progressGoal;
-
-	//	if (achievementProgress->progress + increase >= goal)
-	//	{
-	//		achievementProgress->progress = goal;
-	//		achievementProgress->bIsAchievementUnlocked = true;
-
-
-	//		// CALL UNLOCK ON PLATFORMS HERE =========================================================================
-	//	}
-	//	else
-	//		achievementProgress->progress += increase;
-
-	//	UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%d'"), *achievementID, achievementProgress->progress);
-	//	return true;
-	//}
-	//UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the Link ID '%d'"), id);
-	//return false;
 }
 
 #undef LOCTEXT_NAMESPACE

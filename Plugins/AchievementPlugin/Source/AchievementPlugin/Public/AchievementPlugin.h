@@ -52,6 +52,7 @@ public:
 	{
 		return m_initializePlatform;
 	}
+	int32 GetLinkIDByAchievementID(const FString& achievementId);
 
 	UPROPERTY(config, EditAnywhere, Category = "Achievements", meta = (DisplayName = "Default Save Slot Settings",
 			  Tooltip = "The defaults used for the saved profiles for achievementsData. Modifying this can cause old achievement progress to break"))
@@ -139,7 +140,7 @@ public:
 	void CleanupAchievements();
 
 	// Sets the progress for the achievement, including updating platforms
-	bool SetAchievementProgress(int32 achievementID);
+	bool IncreaseAchievementProgress(const FString& achievementId, int32 increase);
 
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
 	// the 'Key' is the LinkID that the achievementData has

@@ -18,12 +18,12 @@ public:
 	//		  meta = (DisplayName = "Set Value as Bool",
 	//		  AutoCreateRefTerm = "achievementName",
 	//		  GetOptions = "UAchievementPluginBPLibrary.GetAchievementNames"))
-	//bool SetAchievementProgress(const FString& achievementName, int32 increase);
+	//bool IncreaseAchievementProgress(const FString& achievementName, int32 increase);
 
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Achievement Progress", Keywords = "Set Achievement Progress"), Category = "AchievementPlugin")
-	static bool SetAchievementProgress(
-		const FString& achievementID,
+	static bool IncreaseAchievementProgress(
+		const FString& achievementId,
 		int32 increase);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress Async", Keywords = "Save Achievement Progress Async"), Category = "AchievementPlugin")
