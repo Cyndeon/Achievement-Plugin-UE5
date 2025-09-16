@@ -42,7 +42,7 @@ UAchievementManager* GetManager()
 //	return TArray<FString>();
 //}
 
-bool UAchievementPluginBPLibrary::SetAchievementProgress(const FString& achievementId, const int32 increase)
+bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& achievementId, const int32 increase)
 {
 	return GetManager()->IncreaseAchievementProgress(achievementId, increase);
 }
