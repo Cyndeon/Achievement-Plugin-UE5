@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "AchievementPlatformsEnum.h"
 #include "AchievementPluginBPLibrary.generated.h"
 
 
@@ -46,6 +47,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Save Slot Index", Keywords = "Save Slot Index"), Category = "AchievementPlugin")
 	static void SetActiveSaveSlotIndex(int32 newIndex);
+
+	// this function should only be called when the user manually initializes the platform
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Achievement Platform Initialized", Keywords = "Achievement Platform Initialized"), Category = "AchievementPlugin")
+	static void AchievementPlatformInitialized(EAchievementPlatforms platform, bool init = true);
 };
 
 

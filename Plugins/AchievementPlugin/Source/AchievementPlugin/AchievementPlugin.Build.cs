@@ -49,7 +49,7 @@ public class AchievementPlugin : ModuleRules
             PrivateDependencyModuleNames.AddRange(new string[]
             {
                 "PropertyEditor",
-                "ToolMenus",     
+                "ToolMenus",
                 "DetailCustomizations",
                 "Settings",
                 "EditorSettingsViewer",
@@ -63,13 +63,11 @@ public class AchievementPlugin : ModuleRules
             }
         );
 
-        // only works for win64, add more options later!
-        string SteamPath = Path.Combine(ModuleDirectory, "ThirdParty", "steamworks_sdk_162", "sdk");
+        // only works for win64 and with Steam, add more options later!
+        var steamPath = Path.Combine(ModuleDirectory, "ThirdParty", "steamworks_sdk_162", "sdk");
 
-        PublicIncludePaths.Add(Path.Combine(SteamPath, "sdk", "public"));
-        PublicAdditionalLibraries.Add(Path.Combine(SteamPath, "redistributable_bin", "win64", "steam_api64.lib"));
-
+        PublicAdditionalLibraries.Add(Path.Combine(steamPath, "redistributable_bin", "win64", "steam_api64.lib"));
         RuntimeDependencies.Add("$(TargetOutputDir)/steam_api64.dll",
-	        Path.Combine(SteamPath, "redistributable_bin", "win64", "steam_api64.dll"));
+            Path.Combine(steamPath, "redistributable_bin", "win64", "steam_api64.dll"));
     }
 }

@@ -8,38 +8,10 @@
 
 #include "AchievementLogCategory.h"
 #include "USaveSystem.h"
-
-#include "../ThirdParty/steamworks_sdk_162/sdk/public/steam/steam_api.h"
+#include "AchievementPlatforms.h"
 
 
 #define LOCTEXT_NAMESPACE "FAchievementPluginModule"
-
-void CreateSteamAppIdFile(const int32 appId)
-{
-	FString executableDir = "";
-#if WITH_EDITOR
-	// In editor, use the project directory (instead of Engine's folder)
-	executableDir = FPaths::ProjectDir();
-#else
-	// In packaged game, use the executable directory
-	executableDir = FPaths::GetPath(FPlatformProcess::ExecutablePath());
-#endif
-	const FString appIdFilePath = FPaths::Combine(executableDir, TEXT("steam_appid.txt"));
-
-	UE_LOG(AchievementLog, Log, TEXT("Creating steam_appid.txt at: %s"), *appIdFilePath);
-
-	// Write the App ID to the file (this will overwrite if file exists)
-	const FString& appIdString = FString().FormatAsNumber(appId);
-
-	if (FFileHelper::SaveStringToFile(appIdString, *appIdFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
-	{
-		UE_LOG(AchievementLog, Log, TEXT("Successfully created steam_appid.txt with App ID: %s"), *appIdString);
-	}
-	else
-	{
-		UE_LOG(AchievementLog, Error, TEXT("ERROR: Failed to create steam_appid.txt file"));
-	}
-}
 
 void FAchievementPluginModule::StartupModule()
 {
@@ -56,85 +28,10 @@ void FAchievementPluginModule::StartupModule()
 		);
 	}
 #endif
-
-	// platform initialization
-	const auto* settings = UAchievementPluginSettings::Get();
-	if (settings->GetInitializePlatform())
+	if (UAchievementPluginSettings::Get()->GetManuallyInitializePlatform())
 	{
-
-		switch (settings->GetAchievementPlatform())
-		{
-			case STEAM:
-			{
-#if WITH_EDITOR
-				// sets the environment variable for SteamAppID during editor (basically telling SteamAPI what SteamAppId is)
-				const FString appIdString = FString::Printf(TEXT("%d"), settings->GetSteamAppID());
-				FPlatformMisc::SetEnvironmentVar(TEXT("SteamAppId"), *appIdString);
-#endif
-
-				// just to make sure the file exists
-				CreateSteamAppIdFile(settings->GetSteamAppID());
-
-				if (!SteamAPI_IsSteamRunning())
-				{
-					UE_LOG(AchievementLog, Error, TEXT("ERROR: Steam is not running!"));
-					return;
-				}
-
-				UE_LOG(AchievementLog, Log, TEXT("Steam is running, attempting detailed initialization..."));
-
-				// Use SteamAPI_InitEx for detailed error information
-				SteamErrMsg errMsg;
-				switch (const ESteamAPIInitResult initResult = SteamAPI_InitEx(&errMsg))
-				{
-					case k_ESteamAPIInitResult_OK:
-						UE_LOG(AchievementLog, Log, TEXT("Steam API initialized successfully!"));
-						break;
-
-					case k_ESteamAPIInitResult_FailedGeneric:
-						UE_LOG(AchievementLog, Error, TEXT("ERROR: Steam Init Failed: Generic failure"));
-						UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-						return;
-
-					case k_ESteamAPIInitResult_NoSteamClient:
-						UE_LOG(AchievementLog, Error, TEXT("ERROR: Steam Init Failed: No Steam client running"));
-						UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-						return;
-
-					case k_ESteamAPIInitResult_VersionMismatch:
-						UE_LOG(AchievementLog, Error, TEXT("ERROR: Steam Init Failed: Version mismatch between client and SDK"));
-						UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-						return;
-
-					default:
-						UE_LOG(AchievementLog, Error, TEXT("ERROR: Steam Init Failed: Unknown error %d"), (int32)initResult);
-						UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-						return;
-				}
-
-				// verify user has been found and is logged int
-				if (SteamUser() && SteamUser()->BLoggedOn())
-				{
-					const CSteamID steamID = SteamUser()->GetSteamID();
-					UE_LOG(AchievementLog, Log, TEXT("Steam User ID: %llu"), steamID.ConvertToUint64());
-
-					if (SteamUserStats())
-					{
-						UE_LOG(AchievementLog, Log, TEXT("SteamUserStats interface ready"));
-						const auto bSuccess = SteamUserStats()->RequestUserStats(SteamUser()->GetSteamID());
-						UE_LOG(AchievementLog, Log, TEXT("RequestUserStats result: %s"), bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"));
-					}
-				}
-
-				break;
-			}
-
-			// IMPLEMENT EOS LATER
-
-			// for Local Only, no need to set up anything
-			default:
-				break;
-		}
+		m_bWasManuallyInitialized = true;
+		UAchievementPlatformsClass::Get()->InitializePlatform(UAchievementPluginSettings::Get()->GetAchievementPlatform());
 	}
 }
 
@@ -151,17 +48,13 @@ void FAchievementPluginModule::ShutdownModule()
 	}
 #endif
 
-	const auto* settings = UAchievementPluginSettings::Get();
-	if (settings->GetInitializePlatform())
+	// an extra shutdown at the end just to make sure it did shut down properly in case the program exits unexpectedly
+	if (!bHasPlatformShutDown)
 	{
-		switch (settings->GetAchievementPlatform())
+		bHasPlatformShutDown = true;
+		if (const auto* platformClass = UAchievementPlatformsClass::Get())
 		{
-			case STEAM:
-			{
-				SteamAPI_Shutdown();
-			}
-			default:
-				break;
+			platformClass->ShutdownPlatform();
 		}
 	}
 }
@@ -184,44 +77,44 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	const FName changedPropertyName = propertyChangedEvent.GetPropertyName();
 
 	// load runtime stats button
-	if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, loadRuntimeStatsButton))
+	if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bLoadRuntimeStatsButton))
 	{
-		if (loadRuntimeStatsButton) // only when checked
+		if (bLoadRuntimeStatsButton) // only when checked
 		{
 			UpdateRuntimeStats();
 
 			// Reset so it can be clicked again
-			loadRuntimeStatsButton = false;
+			bLoadRuntimeStatsButton = false;
 		}
 	}
 
 	// force save progress button
-	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, forceSaveAchievements))
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceSaveAchievements))
 	{
-		if (forceSaveAchievements) // only when checked
+		if (bForceSaveAchievements) // only when checked
 		{
 			// From any class that has access to the engine
-			auto* manager = UAchievementManager::Get();
+			auto* manager = UAchievementManagerSubSystem::Get();
 			manager->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
 
 			// Reset so it can be clicked again
-			forceSaveAchievements = false;
+			bForceSaveAchievements = false;
 		}
 	}
 
 	// force load progress button
-	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, forceLoadAchievementProgress))
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceLoadAchievementProgress))
 	{
-		if (forceLoadAchievementProgress) // only when checked
+		if (bForceLoadAchievementProgress) // only when checked
 		{
 			// From any class that has access to the engine
-			auto* manager = UAchievementManager::Get();
+			auto* manager = UAchievementManagerSubSystem::Get();
 			manager->achievementsProgress = manager->GetSaveManager()->LoadProgress();
 
 			manager->CleanupAchievements();
 
 			// Reset so it can be clicked again
-			forceLoadAchievementProgress = false;
+			bForceLoadAchievementProgress = false;
 		}
 	}
 
@@ -230,7 +123,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	{
 		if (progressStuff) // only when checked
 		{
-			auto* manager = UAchievementManager::Get();
+			auto* manager = UAchievementManagerSubSystem::Get();
 			const int count = manager->achievementsProgress.Num();
 			for (int i = 0; i < count; i++)
 			{
@@ -247,7 +140,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(FSaveSlotSettings, slotName) ||
 			 changedPropertyName == GET_MEMBER_NAME_CHECKED(FSaveSlotSettings, slotIndex))
 	{
-		const auto getter = UAchievementManager::Get();
+		const auto getter = UAchievementManagerSubSystem::Get();
 		getter->GetSaveManager()->SetSaveSlotSettings(defaultSaveSlotSettings);
 
 		AttemptSave();
@@ -274,7 +167,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 					chiev.Value.OverrideLinkID(linkID);
 
 					// create the empty Achievement Progress as well
-					auto* manager = UAchievementManager::Get();
+					auto* manager = UAchievementManagerSubSystem::Get();
 					manager->achievementsProgress.Add(linkID, FAchievementProgress());
 					UE_LOG(AchievementLog, Log, TEXT("Created a new achievement with Link ID '%d'"), linkID);
 
@@ -287,7 +180,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, m_steamAppID))
 	{
-		CreateSteamAppIdFile(m_steamAppID);
+		UAchievementPlatformsClass::CreateSteamAppIdFile(m_steamAppID);
 	}
 
 	Super::PostEditChangeProperty(propertyChangedEvent);
@@ -304,7 +197,7 @@ void UAchievementPluginSettings::AttemptSave()
 
 void UAchievementPluginSettings::UpdateRuntimeStats()
 {
-	const auto progressData = UAchievementManager::Get()->achievementsProgress;
+	const auto progressData = UAchievementManagerSubSystem::Get()->achievementsProgress;
 	// look for the progress that has the same LinkID
 	for (auto& chiev : achievementsData)
 	{
@@ -320,18 +213,18 @@ void UAchievementPluginSettings::UpdateRuntimeStats()
 }
 #endif
 
-UAchievementManager* UAchievementManager::Get()
+UAchievementManagerSubSystem* UAchievementManagerSubSystem::Get()
 {
 	if (GEngine)
 	{
-		return GEngine->GetEngineSubsystem<UAchievementManager>();
+		return GEngine->GetEngineSubsystem<UAchievementManagerSubSystem>();
 	}
 	// should never happen
-	UE_LOG(AchievementLog, Error, TEXT("Achievement Manager subsystem is deleted, please restart the engine/game (if this doesn't crash it already)!"));
+	UE_LOG(AchievementLog, Fatal, TEXT("Achievement Manager subsystem is deleted, please restart the engine/game (if this doesn't crash it already)!"));
 	return nullptr;
 }
 
-UAchievementSaveManager* UAchievementManager::GetSaveManager() const
+UAchievementSaveManager* UAchievementManagerSubSystem::GetSaveManager() const
 {
 	{
 		if (m_saveManager)
@@ -344,9 +237,19 @@ UAchievementSaveManager* UAchievementManager::GetSaveManager() const
 	}
 }
 
-void UAchievementManager::Initialize(FSubsystemCollectionBase& collection)
+void UAchievementManagerSubSystem::Initialize(FSubsystemCollectionBase& collection)
 {
 	Super::Initialize(collection);
+
+	m_worldInitializedHandle = FWorldDelegates::OnPostWorldInitialization.AddUFunction(
+		this,
+		FName("OnWorldInitialized")
+	);
+
+	m_worldCleanupHandle = FWorldDelegates::OnWorldCleanup.AddUFunction(
+		this,
+		FName("OnWorldCleanup")
+	);
 
 	m_saveManager = NewObject<UAchievementSaveManager>(this);
 
@@ -362,7 +265,7 @@ void UAchievementManager::Initialize(FSubsystemCollectionBase& collection)
 		CleanupAchievements();
 }
 
-void UAchievementManager::Deinitialize()
+void UAchievementManagerSubSystem::Deinitialize()
 {
 	// Make sure to save the current achievementsData before exiting (using the sync, not Async version)
 	if (m_saveManager)
@@ -384,7 +287,7 @@ void UAchievementManager::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UAchievementManager::InitializeAchievements()
+void UAchievementManagerSubSystem::InitializeAchievements()
 {
 	const UAchievementPluginSettings* settings = UAchievementPluginSettings::Get();
 	// if there are as many achievements as there are progress for them, return
@@ -406,7 +309,7 @@ void UAchievementManager::InitializeAchievements()
 	}
 }
 
-void UAchievementManager::CleanupAchievements()
+void UAchievementManagerSubSystem::CleanupAchievements()
 {
 	// Remove any progress entries that don't exist in settings anymore
 	UAchievementPluginSettings* settings = UAchievementPluginSettings::Get();
@@ -435,7 +338,7 @@ void UAchievementManager::CleanupAchievements()
 		UE_LOG(AchievementLog, Log, TEXT("Cleanup finished, deleted achievement progress for %d achievements."), removedAchievements)
 }
 
-bool UAchievementManager::IncreaseAchievementProgress(const FString& achievementId, const int32 increase)
+bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& achievementId, const int32 increase)
 {
 	const auto linkId = UAchievementPluginSettings::Get()->GetLinkIDByAchievementID(achievementId);
 	if (auto* achievementProgress = achievementsProgress.Find(linkId))
@@ -447,25 +350,64 @@ bool UAchievementManager::IncreaseAchievementProgress(const FString& achievement
 			return true;
 		}
 
+		const auto platform = UAchievementPluginSettings::Get()->GetAchievementPlatform();
 		// if goal has been reached, unlock it
-		const auto goal = UAchievementPluginSettings::Get()->achievementsData.Find(achievementId)->progressGoal;
+		const auto achievement = UAchievementPluginSettings::Get()->achievementsData.Find(achievementId);
+		const auto goal = achievement->progressGoal;
 
 		if (achievementProgress->progress + increase >= goal)
 		{
 			achievementProgress->progress = goal;
 			achievementProgress->bIsAchievementUnlocked = true;
-
-
-			// CALL UNLOCK ON PLATFORMS HERE =========================================================================
 		}
 		else
+		{
 			achievementProgress->progress += increase;
+		}
+		UAchievementPlatformsClass::Get()->IncreasePlatformAchievementProgress(*achievement, increase);
 
 		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%d'"), *achievementId, achievementProgress->progress);
 		return true;
 	}
 	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the '%s'"), *achievementId);
 	return false;
+}
+
+void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world, const UWorld::InitializationValues& ivs)
+{
+	// Only initialize for actual game worlds, not editor preview worlds
+	if (world && world->IsGameWorld())
+	{
+		if (const auto* settings = UAchievementPluginSettings::Get())
+		{
+			if (settings->GetManuallyInitializePlatform())
+			{
+				if (auto* platformClass = UAchievementPlatformsClass::Get())
+				{
+					platformClass->InitializePlatform(settings->GetAchievementPlatform());
+				}
+			}
+		}
+	}
+}
+
+void UAchievementManagerSubSystem::OnWorldCleanup(const UWorld* world, bool bSessionEnded, bool bCleanupResources)
+{
+	// Only initialize for actual game worlds, not editor preview worlds
+	if (world && world->IsGameWorld())
+	{
+		if (auto* plugin = FAchievementPluginModule::Get())
+		{
+			if (!plugin->bHasPlatformShutDown)
+			{
+				plugin->bHasPlatformShutDown = true;
+				if (const auto* platformClass = UAchievementPlatformsClass::Get())
+				{
+					platformClass->ShutdownPlatform();
+				}
+			}
+		}
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -8,6 +8,7 @@
 #include "KismetCompiler.h"
 
 #include "AchievementLogCategory.h"
+#include "AchievementPlatforms.h"
 #include "AchievementPlugin.h"
 #include "K2Node_CallFunction.h"
 #include "USaveSystem.h"
@@ -18,9 +19,9 @@ UAchievementPluginBPLibrary::UAchievementPluginBPLibrary(const FObjectInitialize
 
 }
 
-UAchievementManager* GetManager()
+UAchievementManagerSubSystem* GetManager()
 {
-	if (auto* manager = UAchievementManager::Get())
+	if (auto* manager = UAchievementManagerSubSystem::Get())
 	{
 		return manager;
 	}
@@ -112,4 +113,16 @@ void UAchievementPluginBPLibrary::SetActiveSaveSlotIndex(const int32 newIndex)
 {
 	GetManager()->GetSaveManager()->SetSaveSlotIndex(newIndex);
 	return;
+}
+
+void UAchievementPluginBPLibrary::AchievementPlatformInitialized(const EAchievementPlatforms platform, const bool init)
+{
+	if (auto* platformClass = UAchievementPlatformsClass::Get())
+	{
+		platformClass->platformInitialized = init;
+		platformClass->selectedPlatform = platform;
+		return;
+	}
+
+	UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: AchievementPlatformClass cannot be found!"));
 }

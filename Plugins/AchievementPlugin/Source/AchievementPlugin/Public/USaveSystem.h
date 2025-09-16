@@ -21,7 +21,7 @@ public:
 	TMap<int32, FAchievementProgress> achievementProgressSave;
 };
 
-// note: this class only exists in UAchievementManager (by default)
+// note: this class only exists in UAchievementManagerSubSystem (by default)
 UCLASS(BlueprintType, Blueprintable)
 class ACHIEVEMENTPLUGIN_API UAchievementSaveManager : public UObject
 {

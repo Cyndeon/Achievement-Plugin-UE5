@@ -4,6 +4,7 @@
 
 #include "Modules/ModuleManager.h"
 #include "CoreMinimal.h"
+#include "AchievementPlatformsEnum.h"
 #include "Engine/DeveloperSettings.h"
 #include "AchievementStructs.h"
 #include "Subsystems/EngineSubsystem.h"
@@ -11,21 +12,28 @@
 
 #include "AchievementPlugin.generated.h"
 
-UENUM()
-enum EAchievementPlatforms : uint8
-{
-	LOCALONLY = 0,
-	STEAM,
-	EOS
-};
 
 class FAchievementPluginModule : public IModuleInterface
 {
 public:
+	static FAchievementPluginModule* Get()
+	{
+		return FModuleManager::GetModulePtr<FAchievementPluginModule>("AchievementPlugin");
+	}
+	bool WasManuallyInitialized() const
+	{
+		return m_bWasManuallyInitialized;
+	}
 
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
+
+	// this is there to make sure the platform gets shut down if the program closes unexpectedly
+	bool bHasPlatformShutDown = false;
+
+private:
+	bool m_bWasManuallyInitialized = false;
 };
 
 UCLASS(config = Game, defaultconfig, meta = (DisplayName = "Achievement System"))
@@ -48,7 +56,7 @@ public:
 		return m_steamAppID;
 	}
 	// returns whether platforms should be (de)initialized
-	bool GetInitializePlatform() const
+	bool GetManuallyInitializePlatform() const
 	{
 		return m_initializePlatform;
 	}
@@ -71,13 +79,13 @@ public:
 	// This is the "button"
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
 			  Tooltip = "Enable this to update the runtime stats (progress) of the achievementsData"))
-	bool loadRuntimeStatsButton = false;
+	bool bLoadRuntimeStatsButton = false;
 
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "Force Save Achievments"))
-	bool forceSaveAchievements = false;
+	bool bForceSaveAchievements = false;
 
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "Force Load Achievement Progress"))
-	bool forceLoadAchievementProgress = false;
+	bool bForceLoadAchievementProgress = false;
 
 	// TEMP
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))
@@ -109,7 +117,7 @@ private:
 	TEnumAsByte<EAchievementPlatforms> m_achievementPlatform;
 
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Initialize Platform",
-			  Tooltip = "This will Initialize and Deinitialize the platform's API, disable this if you want to set it up yoursel!"))
+			  Tooltip = "This will Initialize and Deinitialize the platform's API, disable this if you want to set it up yourself! If setting up manually, make sure to also call AchievementPlatformInitialized in your level blueprint!"))
 	bool m_initializePlatform = true;
 
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Steam App ID", EditCondition = "IsSteamPlatform", EditConditionHides))
@@ -119,12 +127,12 @@ private:
 class UAchievementSaveManager;
 UCLASS()
 // Note: If a default UI ever gets added, change this into a UGameEngineSubsystem and remove the buttons from the class above
-class ACHIEVEMENTPLUGIN_API UAchievementManager : public UEngineSubsystem
+class ACHIEVEMENTPLUGIN_API UAchievementManagerSubSystem : public UEngineSubsystem
 {
 	GENERATED_BODY()
 
 public:
-	static UAchievementManager* Get();
+	static UAchievementManagerSubSystem* Get();
 	UAchievementSaveManager* GetSaveManager() const;
 
 	// Override the Initialize function to add loading the progress
@@ -148,4 +156,11 @@ public:
 private:
 	UPROPERTY()
 	UAchievementSaveManager* m_saveManager;
+
+	static void OnWorldInitialized(const UWorld* world, const UWorld::InitializationValues& ivs);
+
+	static void OnWorldCleanup(const UWorld* world, bool bSessionEnded, bool bCleanupResources);
+
+	FDelegateHandle m_worldInitializedHandle;
+	FDelegateHandle m_worldCleanupHandle;
 };
