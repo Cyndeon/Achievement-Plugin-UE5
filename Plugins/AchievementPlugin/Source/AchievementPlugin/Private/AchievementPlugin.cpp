@@ -7,7 +7,6 @@
 #endif
 
 #include "AchievementLogCategory.h"
-#include "Misc/MessageDialog.h"
 #include "USaveSystem.h"
 
 #include "../ThirdParty/steamworks_sdk_162/sdk/public/steam/steam_api.h"
@@ -17,31 +16,29 @@
 
 void CreateSteamAppIdFile(const int32 appId)
 {
-	// Get the directory where the executable is located
-	FString ExecutableDir = FPaths::ConvertRelativePathToFull(FPlatformProcess::BaseDir());
-	FString AppIdFilePath = FPaths::Combine(ExecutableDir, TEXT("steam_appid.txt"));
+	FString executableDir = "";
+#if WITH_EDITOR
+	// In editor, use the project directory (instead of Engine's folder)
+	executableDir = FPaths::ProjectDir();
+#else
+	// In packaged game, use the executable directory
+	executableDir = FPaths::GetPath(FPlatformProcess::ExecutablePath());
+#endif
+	const FString appIdFilePath = FPaths::Combine(executableDir, TEXT("steam_appid.txt"));
 
-	UE_LOG(AchievementLog, Log, TEXT("Creating steam_appid.txt at: %s"), *AppIdFilePath);
+	UE_LOG(AchievementLog, Log, TEXT("Creating steam_appid.txt at: %s"), *appIdFilePath);
 
 	// Write the App ID to the file (this will overwrite if file exists)
 	const FString& appIdString = FString().FormatAsNumber(appId);
-	bool bSuccess = FFileHelper::SaveStringToFile(appIdString, *AppIdFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 
-	if (bSuccess)
+	if (FFileHelper::SaveStringToFile(appIdString, *appIdFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 	{
 		UE_LOG(AchievementLog, Log, TEXT("Successfully created steam_appid.txt with App ID: %s"), *appIdString);
-
-		// Verify the file was created correctly
-		FString ReadBack;
-		if (FFileHelper::LoadFileToString(ReadBack, *AppIdFilePath))
-		{
-			UE_LOG(AchievementLog, Log, TEXT("File verification - contents: '%s'"), *ReadBack.TrimStartAndEnd());
-		}
 	}
 	else
 	{
-		UE_LOG(AchievementLog, Error, TEXT("Failed to create steam_appid.txt file"));
-	}	
+		UE_LOG(AchievementLog, Error, TEXT("ERROR: Failed to create steam_appid.txt file"));
+	}
 }
 
 void FAchievementPluginModule::StartupModule()
@@ -49,7 +46,7 @@ void FAchievementPluginModule::StartupModule()
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 
 #if WITH_EDITOR
-	 // Register with settings system to appear in Project Settings
+	 // register the pluginSettings in the developer settings
 	if (ISettingsModule* settingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		settingsModule->RegisterSettings("Project", "Game", "AchievementPlugin",
@@ -59,78 +56,85 @@ void FAchievementPluginModule::StartupModule()
 		);
 	}
 #endif
+
+	// platform initialization
 	const auto* settings = UAchievementPluginSettings::Get();
-	switch (settings->GetAchievementPlatform())
+	if (settings->GetInitializePlatform())
 	{
-		case EAchievementPlatforms::STEAM:
+
+		switch (settings->GetAchievementPlatform())
 		{
-			// just to make sure the file exists:
-			CreateSteamAppIdFile(settings->GetSteamAppID());
-
-			UE_LOG(AchievementLog, Warning, TEXT("AchievementPlugin module starting up..."));
-
-			if (!SteamAPI_IsSteamRunning())
+			case STEAM:
 			{
-				UE_LOG(AchievementLog, Error, TEXT("Steam is not running!"));
-				return;
-			}
+#if WITH_EDITOR
+				// sets the environment variable for SteamAppID during editor (basically telling SteamAPI what SteamAppId is)
+				const FString appIdString = FString::Printf(TEXT("%d"), settings->GetSteamAppID());
+				FPlatformMisc::SetEnvironmentVar(TEXT("SteamAppId"), *appIdString);
+#endif
 
-			UE_LOG(AchievementLog, Log, TEXT("Steam is running, attempting detailed initialization..."));
+				// just to make sure the file exists
+				CreateSteamAppIdFile(settings->GetSteamAppID());
 
-			// Use SteamAPI_InitEx for detailed error information
-			SteamErrMsg errMsg;
-			ESteamAPIInitResult initResult = SteamAPI_InitEx(&errMsg);
-
-			switch (initResult)
-			{
-				case k_ESteamAPIInitResult_OK:
-					UE_LOG(AchievementLog, Log, TEXT("Steam API initialized successfully!"));
-					break;
-
-				case k_ESteamAPIInitResult_FailedGeneric:
-					UE_LOG(AchievementLog, Error, TEXT("Steam Init Failed: Generic failure"));
-					UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-					return;
-
-				case k_ESteamAPIInitResult_NoSteamClient:
-					UE_LOG(AchievementLog, Error, TEXT("Steam Init Failed: No Steam client running"));
-					UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-					return;
-
-				case k_ESteamAPIInitResult_VersionMismatch:
-					UE_LOG(AchievementLog, Error, TEXT("Steam Init Failed: Version mismatch between client and SDK"));
-					UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-					return;
-
-				default:
-					UE_LOG(AchievementLog, Error, TEXT("Steam Init Failed: Unknown error %d"), (int32)initResult);
-					UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-					return;
-			}
-
-			// Rest of your Steam verification code...
-			if (SteamUser() && SteamUser()->BLoggedOn())
-			{
-				UE_LOG(AchievementLog, Log, TEXT("Steam user is logged on successfully"));
-				CSteamID steamID = SteamUser()->GetSteamID();
-				UE_LOG(AchievementLog, Log, TEXT("Steam User ID: %llu"), steamID.ConvertToUint64());
-
-				if (SteamUserStats())
+				if (!SteamAPI_IsSteamRunning())
 				{
-					UE_LOG(AchievementLog, Log, TEXT("SteamUserStats interface ready"));
-					auto bSuccess = SteamUserStats()->RequestUserStats(SteamUser()->GetSteamID());
-					UE_LOG(AchievementLog, Log, TEXT("RequestUserStats result: %s"), bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"));
+					UE_LOG(AchievementLog, Error, TEXT("ERROR: Steam is not running!"));
+					return;
 				}
+
+				UE_LOG(AchievementLog, Log, TEXT("Steam is running, attempting detailed initialization..."));
+
+				// Use SteamAPI_InitEx for detailed error information
+				SteamErrMsg errMsg;
+				switch (const ESteamAPIInitResult initResult = SteamAPI_InitEx(&errMsg))
+				{
+					case k_ESteamAPIInitResult_OK:
+						UE_LOG(AchievementLog, Log, TEXT("Steam API initialized successfully!"));
+						break;
+
+					case k_ESteamAPIInitResult_FailedGeneric:
+						UE_LOG(AchievementLog, Error, TEXT("ERROR: Steam Init Failed: Generic failure"));
+						UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
+						return;
+
+					case k_ESteamAPIInitResult_NoSteamClient:
+						UE_LOG(AchievementLog, Error, TEXT("ERROR: Steam Init Failed: No Steam client running"));
+						UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
+						return;
+
+					case k_ESteamAPIInitResult_VersionMismatch:
+						UE_LOG(AchievementLog, Error, TEXT("ERROR: Steam Init Failed: Version mismatch between client and SDK"));
+						UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
+						return;
+
+					default:
+						UE_LOG(AchievementLog, Error, TEXT("ERROR: Steam Init Failed: Unknown error %d"), (int32)initResult);
+						UE_LOG(AchievementLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
+						return;
+				}
+
+				// verify user has been found and is logged int
+				if (SteamUser() && SteamUser()->BLoggedOn())
+				{
+					const CSteamID steamID = SteamUser()->GetSteamID();
+					UE_LOG(AchievementLog, Log, TEXT("Steam User ID: %llu"), steamID.ConvertToUint64());
+
+					if (SteamUserStats())
+					{
+						UE_LOG(AchievementLog, Log, TEXT("SteamUserStats interface ready"));
+						const auto bSuccess = SteamUserStats()->RequestUserStats(SteamUser()->GetSteamID());
+						UE_LOG(AchievementLog, Log, TEXT("RequestUserStats result: %s"), bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"));
+					}
+				}
+
+				break;
 			}
 
-			break;
+			// IMPLEMENT EOS LATER
+
+			// for Local Only, no need to set up anything
+			default:
+				break;
 		}
-
-		// IMPLEMENT EOS
-
-		// for Local Only, no need to set up anything
-		default:
-			break;
 	}
 }
 
@@ -140,19 +144,26 @@ void FAchievementPluginModule::ShutdownModule()
 	// we call this function before unloading the module.
 
 #if WITH_EDITOR
-		// Unregister from settings system
+	// unregister from settings system
 	if (ISettingsModule* settingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		settingsModule->UnregisterSettings("Project", "Plugins", "AchievementPlugin");
 	}
 #endif
 
-	SteamAPI_Shutdown();
-}
-
-UAchievementPluginSettings::UAchievementPluginSettings()
-{
-	CacheAchievementNamesArray();
+	const auto* settings = UAchievementPluginSettings::Get();
+	if (settings->GetInitializePlatform())
+	{
+		switch (settings->GetAchievementPlatform())
+		{
+			case STEAM:
+			{
+				SteamAPI_Shutdown();
+			}
+			default:
+				break;
+		}
+	}
 }
 
 #if WITH_EDITOR
@@ -256,8 +267,6 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 					manager->achievementsProgress.Add(linkID, FAchievementProgress());
 					UE_LOG(AchievementLog, Log, TEXT("Created a new achievement with Link ID '%d'"), linkID);
 
-					CacheAchievementNamesArray();
-
 					AttemptSave();
 					break;
 				}
@@ -281,7 +290,6 @@ void UAchievementPluginSettings::AttemptSave()
 	// Force immediate save
 	TryUpdateDefaultConfigFile();
 }
-#endif
 
 void UAchievementPluginSettings::UpdateRuntimeStats()
 {
@@ -299,15 +307,7 @@ void UAchievementPluginSettings::UpdateRuntimeStats()
 
 	}
 }
-
-void UAchievementPluginSettings::CacheAchievementNamesArray()
-{
-	m_cachedAchievementNames.Empty();
-	for (const auto& achievement : achievementsData)
-	{
-		m_cachedAchievementNames.Add(achievement.Key);
-	}
-}
+#endif
 
 UAchievementManager* UAchievementManager::Get()
 {

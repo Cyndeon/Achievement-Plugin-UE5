@@ -34,14 +34,10 @@ class UAchievementPluginSettings : public UObject
 	GENERATED_BODY()
 
 public:
-	UAchievementPluginSettings();
+	UAchievementPluginSettings() = default;
 	static UAchievementPluginSettings* Get()
 	{
 		return GetMutableDefault<UAchievementPluginSettings>();
-	}
-	const TArray<FString>& GetAchievementNames()
-	{
-		return m_cachedAchievementNames;
 	}
 	TEnumAsByte<EAchievementPlatforms> GetAchievementPlatform() const
 	{
@@ -50,6 +46,11 @@ public:
 	int32 GetSteamAppID() const
 	{
 		return m_steamAppID;
+	}
+	// returns whether platforms should be (de)initialized
+	bool GetInitializePlatform() const
+	{
+		return m_initializePlatform;
 	}
 
 	UPROPERTY(config, EditAnywhere, Category = "Achievements", meta = (DisplayName = "Default Save Slot Settings",
@@ -96,7 +97,6 @@ private:
 	UPROPERTY(config)
 	int32 m_nextLinkID = 1;
 private:
-	void CacheAchievementNamesArray();
 
 	UFUNCTION()
 	bool IsSteamPlatform() const
@@ -104,15 +104,15 @@ private:
 		return m_achievementPlatform == EAchievementPlatforms::STEAM;
 	}
 
-	UPROPERTY(EditAnywhere, config, Category = "Achievements Settings", meta = (DisplayName = "Achievement Platform"))
+	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Achievement Platform"))
 	TEnumAsByte<EAchievementPlatforms> m_achievementPlatform;
 
-	UPROPERTY(EditAnywhere, config, Category = "Achievements Settings", meta = (DisplayName = "Steam App ID", EditCondition = "IsSteamPlatform", EditConditionHides))
-	int32 m_steamAppID;
+	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Initialize Platform",
+			  Tooltip = "This will Initialize and Deinitialize the platform's API, disable this if you want to set it up yoursel!"))
+	bool m_initializePlatform = true;
 
-	// just to make sure that this does not save
-	UPROPERTY(Transient)
-	TArray<FString> m_cachedAchievementNames = TArray<FString>();
+	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Steam App ID", EditCondition = "IsSteamPlatform", EditConditionHides))
+	int32 m_steamAppID;
 };
 
 class UAchievementSaveManager;
