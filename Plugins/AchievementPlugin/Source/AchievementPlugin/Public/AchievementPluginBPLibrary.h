@@ -24,7 +24,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Achievement Progress", Keywords = "Set Achievement Progress"), Category = "AchievementPlugin")
 	static bool IncreaseAchievementProgress(
-		const FString& achievementId,
+		const FString& localAchievementId,
 		int32 increase);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress Async", Keywords = "Save Achievement Progress Async"), Category = "AchievementPlugin")

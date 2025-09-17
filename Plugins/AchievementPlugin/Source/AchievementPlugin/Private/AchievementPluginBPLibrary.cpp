@@ -43,9 +43,9 @@ UAchievementManagerSubSystem* GetManager()
 //	return TArray<FString>();
 //}
 
-bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& achievementId, const int32 increase)
+bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& localAchievementId, const int32 increase)
 {
-	return GetManager()->IncreaseAchievementProgress(achievementId, increase);
+	return GetManager()->IncreaseAchievementProgress(localAchievementId, increase);
 }
 
 bool UAchievementPluginBPLibrary::SaveAchievementProgressAsync()

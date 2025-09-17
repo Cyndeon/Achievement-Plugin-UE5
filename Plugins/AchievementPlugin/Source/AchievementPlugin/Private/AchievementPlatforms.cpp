@@ -5,10 +5,21 @@
 
 #include "AchievementLogCategory.h"
 #include "AchievementPlugin.h"
-#include "../ThirdParty/steamworks_sdk_162/sdk/public/steam/steam_api.h"
+
+#pragma region Steam
+SteamAchievementsClass* SteamAchievementsClass::m_instance = nullptr;
+
+SteamAchievementsClass::SteamAchievementsClass() :
+	m_CallbackUserStatsReceived(this, &SteamAchievementsClass::OnUserStatsReceived),
+	m_CallbackUserStatsStored(this, &SteamAchievementsClass::OnUserStatsStored),
+	m_CallbackAchievementStored(this, &SteamAchievementsClass::OnAchievementStored)
+{
+}
 
 bool SteamAchievementsClass::Initialize()
 {
+	m_initialized = false;
+
 	const auto* settings = UAchievementPluginSettings::Get();
 #if WITH_EDITOR
 	// sets the environment variable for SteamAppID during editor (basically telling SteamAPI what SteamAppId is)
@@ -16,8 +27,9 @@ bool SteamAchievementsClass::Initialize()
 	FPlatformMisc::SetEnvironmentVar(TEXT("SteamAppId"), *appIdString);
 #endif
 
+	m_appId = settings->GetSteamAppID();
 	// just to make sure the file exists
-	UAchievementPlatformsClass::Get()->CreateSteamAppIdFile(settings->GetSteamAppID());
+	UAchievementPlatformsClass::Get()->CreateSteamAppIdFile(m_appId);
 
 	if (!SteamAPI_IsSteamRunning())
 	{
@@ -67,6 +79,7 @@ bool SteamAchievementsClass::Initialize()
 			UE_LOG(AchievementPlatformLog, Log, TEXT("SteamUserStats interface ready"));
 			const auto bSuccess = static_cast<bool>(SteamUserStats()->RequestUserStats(SteamUser()->GetSteamID()));
 			UE_LOG(AchievementPlatformLog, Log, TEXT("RequestUserStats result: %s"), bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"));
+			m_initialized = true;
 			return bSuccess;
 		}
 	}
@@ -78,12 +91,90 @@ void SteamAchievementsClass::Shutdown()
 	SteamAPI_Shutdown();
 }
 
-bool SteamAchievementsClass::IncreaseSteamAchievementProgress(FString& achievementId)
+void SteamAchievementsClass::Tick()
 {
-	// TODO
+	// run Steam's callbacks
+	SteamAPI_RunCallbacks();
+}
+
+bool SteamAchievementsClass::SetSteamAchievementProgress(const FString& achievementId, const int32 progress, bool unlocked)
+{
+	if (m_initialized)
+	{
+		bool bSuccess = false;
+		// if the achievement should be unlocked
+		if (unlocked)
+		{
+			// Unlock any achievement (works for both one-time and incremental)
+			bSuccess = SteamUserStats()->SetAchievement(TCHAR_TO_ANSI(*achievementId));
+			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to unlock: %s"), *achievementId);
+		}
+		else
+		{
+			// Set progress (only works for stat-based incremental achievements)
+			bSuccess = SteamUserStats()->SetStat(TCHAR_TO_ANSI(*achievementId), progress);
+			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to update achievement stat: %s = %d"), *achievementId, progress);
+		}
+
+		// Store changes to Steam
+		if (bSuccess)
+		{
+			SteamUserStats()->StoreStats();
+		}
+		else
+			UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR, SetStat/SetAchievevement returned false, could not update StoreStats()"));
+
+		return bSuccess;
+	}
+	UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Steam API wasn't initialized properly!"));
 	return false;
 }
 
+void SteamAchievementsClass::OnUserStatsReceived(UserStatsReceived_t* pCallback)
+{
+	if (pCallback->m_nGameID == SteamUtils()->GetAppID())
+	{
+		if (pCallback->m_eResult == k_EResultOK)
+		{
+			UE_LOG(AchievementPlatformLog, Log, TEXT("User stats received successfully!"));
+			// Now it's safe to read/write stats and achievements
+			m_initialized = true;
+		}
+		else
+		{
+			UE_LOG(AchievementPlatformLog, Error, TEXT("Failed to receive user stats: %d"), pCallback->m_eResult);
+			m_initialized = false;
+		}
+	}
+}
+
+void SteamAchievementsClass::OnUserStatsStored(UserStatsStored_t* pCallback)
+{
+	if (pCallback->m_nGameID == SteamUtils()->GetAppID())
+	{
+		if (pCallback->m_eResult == k_EResultOK)
+		{
+			UE_LOG(AchievementPlatformLog, Log, TEXT("User stats stored successfully!"));
+		}
+		else
+		{
+			UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Failed to store user stats: %d"), pCallback->m_eResult);
+		}
+	}
+}
+
+void SteamAchievementsClass::OnAchievementStored(UserAchievementStored_t* pCallback)
+{
+	if (pCallback->m_nGameID == SteamUtils()->GetAppID())
+	{
+		const FString achievementName = ANSI_TO_TCHAR(pCallback->m_rgchAchievementName);
+		UE_LOG(AchievementPlatformLog, Log, TEXT("Steam Achievement Unlocked: %s"), *achievementName);
+	}
+}
+#pragma endregion
+
+
+EAchievementPlatforms UAchievementPlatformsClass::selectedPlatform;
 
 bool UAchievementPlatformsClass::InitializePlatform(const EAchievementPlatforms platform)
 {
@@ -92,7 +183,7 @@ bool UAchievementPlatformsClass::InitializePlatform(const EAchievementPlatforms 
 	{
 		case STEAM:
 		{
-			platformInitialized = SteamAchievementsClass::Initialize();
+			platformInitialized = SteamAchievementsClass::Get()->Initialize();
 			break;
 		}
 
@@ -101,7 +192,7 @@ bool UAchievementPlatformsClass::InitializePlatform(const EAchievementPlatforms 
 	return platformInitialized;
 }
 
-void UAchievementPlatformsClass::ShutdownPlatform() const
+void UAchievementPlatformsClass::ShutdownPlatform()
 {
 	switch (selectedPlatform)
 	{
@@ -120,18 +211,30 @@ void UAchievementPlatformsClass::ShutdownPlatform() const
 	}
 }
 
-bool UAchievementPlatformsClass::IncreasePlatformAchievementProgress(FAchievementSettings& achievement, int32 increase) const
+bool UAchievementPlatformsClass::SetPlatformAchievementProgress(const FAchievementPlatformIds& platformIds, const int32 progress, const bool unlocked) const
 {
 	switch (selectedPlatform)
 	{
 		case STEAM:
 		{
-			return SteamAchievementsClass::IncreaseSteamAchievementProgress(achievement.steamID);
+			return SteamAchievementsClass::Get()->SetSteamAchievementProgress(platformIds.steamID, progress, unlocked);
 		}
 
 		default:break;
 	}
 	return true;
+}
+
+void UAchievementPlatformsClass::Tick(float DeltaTime)
+{
+	switch (selectedPlatform)
+	{
+		case STEAM:
+		{
+			SteamAchievementsClass::Tick();
+		}
+		default:break;
+	}
 }
 
 void UAchievementPlatformsClass::CreateSteamAppIdFile(const int32 appId)

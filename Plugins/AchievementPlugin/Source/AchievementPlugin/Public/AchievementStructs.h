@@ -47,26 +47,33 @@ public:
 	FString unlockedTime = "Never";
 };
 
+
+USTRUCT(BlueprintType)
+struct ACHIEVEMENTPLUGIN_API FAchievementPlatformIds
+{
+	GENERATED_BODY()
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Steam",
+			  meta = (DisplayName = "Steam Achievement ID", Tooltip = "For progressive achievements, please enter the Stat used for tracking progress instead!"))
+	FString steamID = "";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Epic",
+			  meta = (DisplayName = "Epic Achievement ID"))
+	FString epicID = "";
+};
 USTRUCT(BlueprintType)
 // this struct has all the data that is inside the developer settings, ReadOnly for blueprints
 struct ACHIEVEMENTPLUGIN_API FAchievementSettings : public FLinkedStruct
 {
 	GENERATED_BODY()
 public:
+#if WITH_EDITOR
 	void UpdateProgressEditorOnly(const FAchievementProgress& progress)
 	{
 		m_currentProgress = progress;
 	}
-
-	// Platform-specific identifiers
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Steam",
-			  meta = (DisplayName = "Steam Achievement ID"))
-	FString steamID = "";
-	// Platform-specific identifiers
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Epic",
-			  meta = (DisplayName = "Epic Achievement ID"))
-	FString epicID = "";
-
+#endif
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Developer")
 	bool isHidden = false;
 
@@ -81,11 +88,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Public", meta = (ClampMin = "0"))
 	int32 progressGoal = 1;
 
+	// Platform-specific identifiers
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms",
+			  meta = (DisplayName = "Platform Ids"))
+	FAchievementPlatformIds platformIds;
+#if WITH_EDITORONLY_DATA
 private:
 	// Runtime data (visible only here but not editable, NOT saved to config)
 	UPROPERTY(VisibleAnywhere, Transient, Category = "Runtime Stats",
 			  meta = (DisplayName = "Current Progress (NOT LIVE)"))
 	FAchievementProgress m_currentProgress = FAchievementProgress();
+#endif
 };
 
 USTRUCT(BlueprintType)

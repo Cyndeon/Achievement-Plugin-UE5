@@ -9,6 +9,7 @@
 #include "AchievementStructs.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "Engine/Engine.h"
+#include "Engine/World.h"
 
 #include "AchievementPlugin.generated.h"
 
@@ -20,10 +21,6 @@ public:
 	{
 		return FModuleManager::GetModulePtr<FAchievementPluginModule>("AchievementPlugin");
 	}
-	bool WasManuallyInitialized() const
-	{
-		return m_bWasManuallyInitialized;
-	}
 
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
@@ -32,8 +29,7 @@ public:
 	// this is there to make sure the platform gets shut down if the program closes unexpectedly
 	bool bHasPlatformShutDown = false;
 
-private:
-	bool m_bWasManuallyInitialized = false;
+	bool bWasManuallyInitialized = false;
 };
 
 UCLASS(config = Game, defaultconfig, meta = (DisplayName = "Achievement System"))
@@ -67,28 +63,28 @@ public:
 	FSaveSlotSettings defaultSaveSlotSettings = FSaveSlotSettings();
 
 	// Note: has to be a TMap, TArray gave issues when modifying it in C++ and then trying to save it
-	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievements", meta = (DisplayName = "AchievementsData",
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Achievements", meta = (DisplayName = "AchievementsData",
 			  ToolTip = "Key: Name used for modifying achievementsData in Blueprint Nodes, Value: Achievement settings"))
 	TMap<FString, FAchievementSettings> achievementsData;
 
-	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievements", meta = (DisplayName = "Cleanup Achievements on Load",
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement Settings", meta = (DisplayName = "Cleanup Achievements on Load",
 			  ToolTip = "If enabled, will delete any achievement progress for achievements that no longer exist"))
 	bool bCleanupAchievements = true;
 
 #if WITH_EDITORONLY_DATA
 	// This is the "button"
-	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
+	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
 			  Tooltip = "Enable this to update the runtime stats (progress) of the achievementsData"))
 	bool bLoadRuntimeStatsButton = false;
 
-	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "Force Save Achievments"))
+	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Force Save Achievments"))
 	bool bForceSaveAchievements = false;
 
-	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "Force Load Achievement Progress"))
+	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Force Load Achievement Progress"))
 	bool bForceLoadAchievementProgress = false;
 
 	// TEMP
-	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))
+	UPROPERTY(EditAnywhere, Category = "Achievements Setting Buttonss", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))
 	bool progressStuff = false;
 #endif
 
@@ -113,6 +109,7 @@ private:
 		return m_achievementPlatform == EAchievementPlatforms::STEAM;
 	}
 
+	// platform specific data
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Achievement Platform"))
 	TEnumAsByte<EAchievementPlatforms> m_achievementPlatform;
 
@@ -153,13 +150,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
 	// the 'Key' is the LinkID that the achievementData has
 	TMap<int32, FAchievementProgress> achievementsProgress;
+
+	UFUNCTION()
+	static void OnWorldInitialized(const UWorld* world);
+	UFUNCTION()
+	static void OnWorldCleanup(const UWorld* world, bool bSessionEnded, bool bCleanupResources);
 private:
 	UPROPERTY()
 	UAchievementSaveManager* m_saveManager;
-
-	static void OnWorldInitialized(const UWorld* world, const UWorld::InitializationValues& ivs);
-
-	static void OnWorldCleanup(const UWorld* world, bool bSessionEnded, bool bCleanupResources);
 
 	FDelegateHandle m_worldInitializedHandle;
 	FDelegateHandle m_worldCleanupHandle;

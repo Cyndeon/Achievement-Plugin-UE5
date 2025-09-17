@@ -28,11 +28,6 @@ void FAchievementPluginModule::StartupModule()
 		);
 	}
 #endif
-	if (UAchievementPluginSettings::Get()->GetManuallyInitializePlatform())
-	{
-		m_bWasManuallyInitialized = true;
-		UAchievementPlatformsClass::Get()->InitializePlatform(UAchievementPluginSettings::Get()->GetAchievementPlatform());
-	}
 }
 
 void FAchievementPluginModule::ShutdownModule()
@@ -51,11 +46,8 @@ void FAchievementPluginModule::ShutdownModule()
 	// an extra shutdown at the end just to make sure it did shut down properly in case the program exits unexpectedly
 	if (!bHasPlatformShutDown)
 	{
+		UAchievementPlatformsClass::ShutdownPlatform();
 		bHasPlatformShutDown = true;
-		if (const auto* platformClass = UAchievementPlatformsClass::Get())
-		{
-			platformClass->ShutdownPlatform();
-		}
 	}
 }
 
@@ -124,10 +116,9 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		if (progressStuff) // only when checked
 		{
 			auto* manager = UAchievementManagerSubSystem::Get();
-			const int count = manager->achievementsProgress.Num();
-			for (int i = 0; i < count; i++)
+			for (auto& progress : manager->achievementsProgress)
 			{
-				manager->achievementsProgress[i].progress = FMath::RandRange(1, 100);
+				progress.Value.progress = FMath::RandRange(1, 100);
 			}
 
 			// Reset so it can be clicked again
@@ -201,12 +192,11 @@ void UAchievementPluginSettings::UpdateRuntimeStats()
 	// look for the progress that has the same LinkID
 	for (auto& chiev : achievementsData)
 	{
-		const auto* progress = progressData.Find(chiev.Value.GetLinkID());
-		if (progress != nullptr)
+		if (const auto* progress = progressData.Find(chiev.Value.GetLinkID()))
 		{
 			// set the currentProgress
 			chiev.Value.UpdateProgressEditorOnly(*progress);
-			break;
+
 		}
 
 	}
@@ -350,21 +340,21 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 			return true;
 		}
 
-		const auto platform = UAchievementPluginSettings::Get()->GetAchievementPlatform();
 		// if goal has been reached, unlock it
-		const auto achievement = UAchievementPluginSettings::Get()->achievementsData.Find(achievementId);
+		const auto& achievement = UAchievementPluginSettings::Get()->achievementsData.Find(achievementId);
 		const auto goal = achievement->progressGoal;
 
 		if (achievementProgress->progress + increase >= goal)
 		{
 			achievementProgress->progress = goal;
 			achievementProgress->bIsAchievementUnlocked = true;
+			achievementProgress->unlockedTime = FDateTime::Now().ToString();
 		}
 		else
 		{
 			achievementProgress->progress += increase;
 		}
-		UAchievementPlatformsClass::Get()->IncreasePlatformAchievementProgress(*achievement, increase);
+		UAchievementPlatformsClass::Get()->SetPlatformAchievementProgress(achievement->platformIds, achievementProgress->progress, achievementProgress->bIsAchievementUnlocked);
 
 		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%d'"), *achievementId, achievementProgress->progress);
 		return true;
@@ -373,7 +363,7 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 	return false;
 }
 
-void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world, const UWorld::InitializationValues& ivs)
+void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world)
 {
 	// Only initialize for actual game worlds, not editor preview worlds
 	if (world && world->IsGameWorld())
@@ -385,6 +375,7 @@ void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world, const
 				if (auto* platformClass = UAchievementPlatformsClass::Get())
 				{
 					platformClass->InitializePlatform(settings->GetAchievementPlatform());
+					FAchievementPluginModule::Get()->bWasManuallyInitialized = true;
 				}
 			}
 		}
@@ -398,12 +389,12 @@ void UAchievementManagerSubSystem::OnWorldCleanup(const UWorld* world, bool bSes
 	{
 		if (auto* plugin = FAchievementPluginModule::Get())
 		{
-			if (!plugin->bHasPlatformShutDown)
+			if (!plugin->bHasPlatformShutDown && plugin->bWasManuallyInitialized)
 			{
-				plugin->bHasPlatformShutDown = true;
 				if (const auto* platformClass = UAchievementPlatformsClass::Get())
 				{
 					platformClass->ShutdownPlatform();
+					plugin->bHasPlatformShutDown = true;
 				}
 			}
 		}
