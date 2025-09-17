@@ -328,7 +328,7 @@ void UAchievementManagerSubSystem::CleanupAchievements()
 		UE_LOG(AchievementLog, Log, TEXT("Cleanup finished, deleted achievement progress for %d achievements."), removedAchievements)
 }
 
-bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& achievementId, const int32 increase)
+bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& achievementId, const float increase)
 {
 	const auto linkId = UAchievementPluginSettings::Get()->GetLinkIDByAchievementID(achievementId);
 	if (auto* achievementProgress = achievementsProgress.Find(linkId))
@@ -354,9 +354,9 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 		{
 			achievementProgress->progress += increase;
 		}
-		UAchievementPlatformsClass::Get()->SetPlatformAchievementProgress(achievement->platformIds, achievementProgress->progress, achievementProgress->bIsAchievementUnlocked);
+		UAchievementPlatformsClass::Get()->SetPlatformAchievementProgress(achievement->platformData, achievementProgress->progress, achievementProgress->bIsAchievementUnlocked);
 
-		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%d'"), *achievementId, achievementProgress->progress);
+		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%f'"), *achievementId, achievementProgress->progress);
 		return true;
 	}
 	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the '%s'"), *achievementId);

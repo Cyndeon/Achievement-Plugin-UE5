@@ -2,10 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "Engine/Texture2D.h"
+#include "AchievementPlatformsEnum.h"
 
 #include "AchievementStructs.generated.h" 
 
-// this will allow the achievement structs to be "linked"
+// this will allow the achievement structs to be "linked", only inherited by the data version
 USTRUCT(BlueprintType)
 struct FLinkedStruct
 {
@@ -39,29 +40,35 @@ struct ACHIEVEMENTPLUGIN_API FAchievementProgress
 public:
 	FAchievementProgress() = default;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", meta = (ClampMin = "0"), SaveGame)
-	int32 progress = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", SaveGame)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"), SaveGame)
+	float progress = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 	bool bIsAchievementUnlocked = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Public", SaveGame)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 	FString unlockedTime = "Never";
 };
 
-
 USTRUCT(BlueprintType)
-struct ACHIEVEMENTPLUGIN_API FAchievementPlatformIds
+struct ACHIEVEMENTPLUGIN_API FAchievementPlatformData
 {
 	GENERATED_BODY()
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms", meta = (DisplayName = "Platform Upload Type"))
+	TEnumAsByte<EAchievementUploadTypes> uploadType = Float;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Steam",
-			  meta = (DisplayName = "Steam Achievement ID", Tooltip = "For progressive achievements, please enter the Stat used for tracking progress instead!"))
-	FString steamID = "";
+			  meta = (DisplayName = "Steam Achievement ID"))
+	FString steamAchievementID = "";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Steam",
+			  meta = (DisplayName = "Steam Stat ID", Tooltip = "For progressive achievements (using Stats), please enter the Stat name used for tracking progress!"))
+	FString steamStatID = "";
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Epic",
 			  meta = (DisplayName = "Epic Achievement ID"))
 	FString epicID = "";
 };
+
 USTRUCT(BlueprintType)
 // this struct has all the data that is inside the developer settings, ReadOnly for blueprints
 struct ACHIEVEMENTPLUGIN_API FAchievementSettings : public FLinkedStruct
@@ -90,8 +97,8 @@ public:
 
 	// Platform-specific identifiers
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms",
-			  meta = (DisplayName = "Platform Ids"))
-	FAchievementPlatformIds platformIds;
+			  meta = (DisplayName = "Platform Data"))
+	FAchievementPlatformData platformData;
 #if WITH_EDITORONLY_DATA
 private:
 	// Runtime data (visible only here but not editable, NOT saved to config)

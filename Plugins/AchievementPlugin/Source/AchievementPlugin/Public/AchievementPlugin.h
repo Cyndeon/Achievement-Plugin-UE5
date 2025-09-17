@@ -84,7 +84,7 @@ public:
 	bool bForceLoadAchievementProgress = false;
 
 	// TEMP
-	UPROPERTY(EditAnywhere, Category = "Achievements Setting Buttonss", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))
+	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))
 	bool progressStuff = false;
 #endif
 
@@ -145,7 +145,7 @@ public:
 	void CleanupAchievements();
 
 	// Sets the progress for the achievement, including updating platforms
-	bool IncreaseAchievementProgress(const FString& achievementId, int32 increase);
+	bool IncreaseAchievementProgress(const FString& achievementId, float increase);
 
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
 	// the 'Key' is the LinkID that the achievementData has

@@ -21,7 +21,8 @@ public:
 	bool Initialize();
 	static void Shutdown();
 	static void Tick();
-	bool SetSteamAchievementProgress(const FString& achievementId, int32 progress, bool unlocked);
+
+	bool SetSteamAchievementProgress(const FAchievementPlatformData& achievementData, float progress, bool unlocked) const;
 
 	// callbacks, not meant to be touched at all
 	STEAM_CALLBACK(SteamAchievementsClass, OnUserStatsReceived, UserStatsReceived_t,
@@ -54,7 +55,7 @@ public:
 	bool InitializePlatform(const EAchievementPlatforms platform);
 	static void ShutdownPlatform();
 
-	bool SetPlatformAchievementProgress(const FAchievementPlatformIds& platformIds, int32 progress, bool unlocked) const;
+	bool SetPlatformAchievementProgress(const FAchievementPlatformData& platformData, int32 progress, bool unlocked) const;
 
 	void Tick(float DeltaTime) override;
 

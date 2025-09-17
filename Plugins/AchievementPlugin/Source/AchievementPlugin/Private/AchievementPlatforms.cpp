@@ -13,8 +13,7 @@ SteamAchievementsClass::SteamAchievementsClass() :
 	m_CallbackUserStatsReceived(this, &SteamAchievementsClass::OnUserStatsReceived),
 	m_CallbackUserStatsStored(this, &SteamAchievementsClass::OnUserStatsStored),
 	m_CallbackAchievementStored(this, &SteamAchievementsClass::OnAchievementStored)
-{
-}
+{}
 
 bool SteamAchievementsClass::Initialize()
 {
@@ -97,7 +96,7 @@ void SteamAchievementsClass::Tick()
 	SteamAPI_RunCallbacks();
 }
 
-bool SteamAchievementsClass::SetSteamAchievementProgress(const FString& achievementId, const int32 progress, bool unlocked)
+bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatformData& achievementData, const float progress, const bool unlocked) const
 {
 	if (m_initialized)
 	{
@@ -106,19 +105,39 @@ bool SteamAchievementsClass::SetSteamAchievementProgress(const FString& achievem
 		if (unlocked)
 		{
 			// Unlock any achievement (works for both one-time and incremental)
-			bSuccess = SteamUserStats()->SetAchievement(TCHAR_TO_ANSI(*achievementId));
-			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to unlock: %s"), *achievementId);
+			bSuccess = SteamUserStats()->SetAchievement(TCHAR_TO_ANSI(*achievementData.steamAchievementID));
+			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to unlock: %s"), *achievementData.steamAchievementID);
 		}
 		else
 		{
 			// Set progress (only works for stat-based incremental achievements)
-			bSuccess = SteamUserStats()->SetStat(TCHAR_TO_ANSI(*achievementId), progress);
-			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to update achievement stat: %s = %d"), *achievementId, progress);
+			// we have to convert the type to the type Steam is expecting
+			switch (achievementData.uploadType)
+			{
+				case Float:
+				{
+					// no need to cast, progress is already a float
+					bSuccess = SteamUserStats()->SetStat(TCHAR_TO_ANSI(*achievementData.steamStatID), progress);
+					break;
+				}
+				case Int32:
+				{
+					bSuccess = SteamUserStats()->SetStat(TCHAR_TO_ANSI(*achievementData.steamStatID), static_cast<int32>(progress));
+					break;
+				}
+
+				default:
+				{
+					UE_LOG(AchievementPlatformLog, Error, TEXT("Achievement Type: %s is not supported for Steam uploads!"), *UEnum::GetValueAsString(achievementData.uploadType));
+					bSuccess = false;
+				}
+			}
 		}
 
 		// Store changes to Steam
 		if (bSuccess)
 		{
+			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to update achievement stat: %s = %f"), *achievementData.steamAchievementID, progress);
 			SteamUserStats()->StoreStats();
 		}
 		else
@@ -211,13 +230,13 @@ void UAchievementPlatformsClass::ShutdownPlatform()
 	}
 }
 
-bool UAchievementPlatformsClass::SetPlatformAchievementProgress(const FAchievementPlatformIds& platformIds, const int32 progress, const bool unlocked) const
+bool UAchievementPlatformsClass::SetPlatformAchievementProgress(const FAchievementPlatformData& platformData, const int32 progress, const bool unlocked) const
 {
 	switch (selectedPlatform)
 	{
 		case STEAM:
 		{
-			return SteamAchievementsClass::Get()->SetSteamAchievementProgress(platformIds.steamID, progress, unlocked);
+			return SteamAchievementsClass::Get()->SetSteamAchievementProgress(platformData, progress, unlocked);
 		}
 
 		default:break;
