@@ -2,48 +2,18 @@
 #include "AchievementPlatformsEnum.h"
 #include "AchievementStructs.h"
 
-#include "../ThirdParty/steamworks_sdk_162/sdk/public/steam/steam_api.h"
+#include "AchievementPlatforms.generated.h"
 
 
-class ACHIEVEMENTPLUGIN_API SteamAchievementsClass
-{
-	static SteamAchievementsClass* m_instance;
-public:
-	SteamAchievementsClass();
-	static SteamAchievementsClass* Get()
-	{
-		if (!m_instance)
-		{
-			m_instance = new SteamAchievementsClass();
-		}
-		return m_instance;
-	}
-	bool Initialize();
-	static void Shutdown();
-	static void Tick();
-
-	bool SetSteamAchievementProgress(const FAchievementPlatformData& achievementData, float progress, bool unlocked) const;
-
-	// callbacks, not meant to be touched at all
-	STEAM_CALLBACK(SteamAchievementsClass, OnUserStatsReceived, UserStatsReceived_t,
-				   m_CallbackUserStatsReceived);
-	STEAM_CALLBACK(SteamAchievementsClass, OnUserStatsStored, UserStatsStored_t,
-				   m_CallbackUserStatsStored);
-	STEAM_CALLBACK(SteamAchievementsClass, OnAchievementStored,
-				   UserAchievementStored_t, m_CallbackAchievementStored);
-
-private:
-	int32 m_appId = 0;
-	bool m_initialized = false;
-};
-
-// Basically a wrapper class for all different platforms
+UCLASS()
 class ACHIEVEMENTPLUGIN_API UAchievementPlatformsClass : public UObject, public FTickableGameObject
 {
+	GENERATED_BODY()
 public:
 	UAchievementPlatformsClass()
 	{
 		selectedPlatform = LOCALONLY;
+		achievementPlatformInitialized = false;
 	}
 	static UAchievementPlatformsClass* Get()
 	{
@@ -55,14 +25,24 @@ public:
 	bool InitializePlatform(const EAchievementPlatforms platform);
 	static void ShutdownPlatform();
 
-	bool SetPlatformAchievementProgress(const FAchievementPlatformData& platformData, int32 progress, bool unlocked) const;
+	static bool SetPlatformAchievementProgress(const FAchievementPlatformData& platformData, int32 progress, bool unlocked);
+	static bool PlatformDeleteAchievementProgress(const FAchievementPlatformData& platformData);
+	static bool PlatformDeleteAllAchievementProgress();
 
-	void Tick(float DeltaTime) override;
+	static TMap<FString, FAchievementData> GetPlatformAchievementsAsAchievementDataMap();
+
+	// overrides for the Tickable
+	virtual void Tick(float DeltaTime) override;
+	virtual TStatId GetStatId() const override
+	{
+		RETURN_QUICK_DECLARE_CYCLE_STAT(UAchievementPlatformsClass, STATGROUP_Tickables);
+	}
 
 	// Steam Specific
 	static void CreateSteamAppIdFile(const int32 appId);
 
-	bool platformInitialized = false;
+	static bool achievementPlatformInitialized;
+
 	static EAchievementPlatforms selectedPlatform;
 };
 

@@ -43,9 +43,9 @@ UAchievementManagerSubSystem* GetManager()
 //	return TArray<FString>();
 //}
 
-bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& localAchievementId, const float increase)
+bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& localAchievementId, const float change)
 {
-	return GetManager()->IncreaseAchievementProgress(localAchievementId, increase);
+	return GetManager()->IncreaseAchievementProgress(localAchievementId, change);
 }
 
 bool UAchievementPluginBPLibrary::SaveAchievementProgressAsync()
@@ -74,7 +74,7 @@ bool UAchievementPluginBPLibrary::LoadAchievementProgress()
 	return true;
 }
 
-bool UAchievementPluginBPLibrary::DeleteSingleAchievementProgress(const FString& achievementID)
+bool UAchievementPluginBPLibrary::DeleteSingleAchievementProgress(const FString& achievementID, bool platformsToo)
 {
 	if (auto* manager = GetManager())
 	{
@@ -88,12 +88,15 @@ bool UAchievementPluginBPLibrary::DeleteSingleAchievementProgress(const FString&
 			return true;
 		}
 		UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the Link ID '%d'"), linkID);
+
+		if (platformsToo)
+			UAchievementPlatformsClass::Get()->PlatformDeleteAllAchievementProgress();
 		return false;
 	}
 	return false;
 }
 
-bool UAchievementPluginBPLibrary::DeleteAllAchievementProgress()
+bool UAchievementPluginBPLibrary::DeleteAllAchievementProgress(const bool platformsToo)
 {
 	if (auto* manager = GetManager())
 	{
@@ -104,6 +107,10 @@ bool UAchievementPluginBPLibrary::DeleteAllAchievementProgress()
 		manager->InitializeAchievements();
 
 		UE_LOG(AchievementLog, Log, TEXT("Deleted all achievement progress for' %d' entries"), deletedCount);
+
+		// delete on non-local platform too if true
+		if (platformsToo)
+			UAchievementPlatformsClass::Get()->PlatformDeleteAllAchievementProgress();
 		return true;
 	}
 	return false;
@@ -119,7 +126,7 @@ void UAchievementPluginBPLibrary::AchievementPlatformInitialized(const EAchievem
 {
 	if (auto* platformClass = UAchievementPlatformsClass::Get())
 	{
-		platformClass->platformInitialized = init;
+		platformClass->achievementPlatformInitialized = init;
 		platformClass->selectedPlatform = platform;
 		return;
 	}

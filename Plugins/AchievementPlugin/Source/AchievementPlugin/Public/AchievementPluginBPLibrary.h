@@ -22,10 +22,10 @@ public:
 	//bool IncreaseAchievementProgress(const FString& achievementName, int32 increase);
 
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Achievement Progress", Keywords = "Set Achievement Progress"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Change Achievement Progress", Keywords = "Change Achievement Progress"), Category = "AchievementPlugin")
 	static bool IncreaseAchievementProgress(
 		const FString& localAchievementId,
-		float increase);
+		float change);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress Async", Keywords = "Save Achievement Progress Async"), Category = "AchievementPlugin")
 	static bool SaveAchievementProgressAsync();
@@ -39,11 +39,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete Single Achievement Progress", Keywords = "Delete Single Achievement Progress",
 			  Tooltip = "Delete's given achievement's progress. This cannot be undone!"), Category = "AchievementPlugin")
-	static bool DeleteSingleAchievementProgress(const FString& achievementID);
+	static bool DeleteSingleAchievementProgress(const FString& achievementID, bool platformsToo = true);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete All Achievement Progress", Keywords = "Delete Achievement Progress",
 			  Tooltip="Delete's ALL achievements progress. Will empty all progress but keep the file. This cannot be undone!"), Category = "AchievementPlugin")
-	static bool DeleteAllAchievementProgress();
+	static bool DeleteAllAchievementProgress(bool platformsToo = true);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Save Slot Index", Keywords = "Save Slot Index"), Category = "AchievementPlugin")
 	static void SetActiveSaveSlotIndex(int32 newIndex);

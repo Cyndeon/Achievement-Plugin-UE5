@@ -37,6 +37,13 @@ class UAchievementPluginSettings : public UObject
 {
 	GENERATED_BODY()
 
+	// used for hiding variables
+	UFUNCTION()
+	bool IsSteamPlatform() const
+	{
+		return m_achievementPlatform == EAchievementPlatforms::STEAM;
+	}
+
 public:
 	UAchievementPluginSettings() = default;
 	static UAchievementPluginSettings* Get()
@@ -58,33 +65,43 @@ public:
 	}
 	int32 GetLinkIDByAchievementID(const FString& achievementId);
 
-	UPROPERTY(config, EditAnywhere, Category = "Achievements", meta = (DisplayName = "Default Save Slot Settings",
+	UPROPERTY(config, EditAnywhere, Category = "Save Slot Settings", meta = (DisplayName = "Default Save Slot Settings",
 			  Tooltip = "The defaults used for the saved profiles for achievementsData. Modifying this can cause old achievement progress to break"))
 	FSaveSlotSettings defaultSaveSlotSettings = FSaveSlotSettings();
 
 	// Note: has to be a TMap, TArray gave issues when modifying it in C++ and then trying to save it
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Achievements", meta = (DisplayName = "AchievementsData",
 			  ToolTip = "Key: Name used for modifying achievementsData in Blueprint Nodes, Value: Achievement settings"))
-	TMap<FString, FAchievementSettings> achievementsData;
+	TMap<FString, FAchievementData> achievementsData;
 
 	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement Settings", meta = (DisplayName = "Cleanup Achievements on Load",
 			  ToolTip = "If enabled, will delete any achievement progress for achievements that no longer exist"))
 	bool bCleanupAchievements = true;
 
 #if WITH_EDITORONLY_DATA
-	// This is the "button"
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
 			  Tooltip = "Enable this to update the runtime stats (progress) of the achievementsData"))
 	bool bLoadRuntimeStatsButton = false;
-
+	// TEMP DELETE
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Force Save Achievments"))
 	bool bForceSaveAchievements = false;
-
+	// TEMP DELETE
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Force Load Achievement Progress"))
 	bool bForceLoadAchievementProgress = false;
 
-	// TEMP
-	UPROPERTY(EditAnywhere, Category = "Achievements Settings", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))
+
+	// Platform-dependant buttons
+	UPROPERTY(EditAnywhere, Category = "Achievements Platform Buttons", Transient, meta = (DisplayName = "Force Download Steam Achievements", 
+			  Tooltip="This will override all your achievements with those from Steam. Please note that Stats will still have to be set manually!",
+			  EditCondition = "IsSteamPlatform", EditConditionHides))
+	bool bForceDownloadSteamAchievements = false;
+	UPROPERTY(EditAnywhere, Category = "Achievements Platform Buttons", Transient, meta = (DisplayName = "This cannot be undone unless you make a backup of your current DefaultGame.ini!",
+			  Tooltip = "Start Download (might take a little bit depending on the amount of achievements!",
+			  EditCondition = "IsSteamPlatform && bForceDownloadSteamAchievements", EditConditionHides))
+	bool bForceDownloadSteamAchievementsSafetyCheck = false;
+
+	// TEMP DELETE
+	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))
 	bool progressStuff = false;
 #endif
 
@@ -102,12 +119,6 @@ private:
 	UPROPERTY(config)
 	int32 m_nextLinkID = 1;
 private:
-
-	UFUNCTION()
-	bool IsSteamPlatform() const
-	{
-		return m_achievementPlatform == EAchievementPlatforms::STEAM;
-	}
 
 	// platform specific data
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Achievement Platform"))

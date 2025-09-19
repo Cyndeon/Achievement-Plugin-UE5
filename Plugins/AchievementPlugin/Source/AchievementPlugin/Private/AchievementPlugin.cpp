@@ -68,6 +68,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 {
 	const FName changedPropertyName = propertyChangedEvent.GetPropertyName();
 
+#pragma region buttons
 	// load runtime stats button
 	if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bLoadRuntimeStatsButton))
 	{
@@ -86,7 +87,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		if (bForceSaveAchievements) // only when checked
 		{
 			// From any class that has access to the engine
-			auto* manager = UAchievementManagerSubSystem::Get();
+			const auto* manager = UAchievementManagerSubSystem::Get();
 			manager->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
 
 			// Reset so it can be clicked again
@@ -110,6 +111,33 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		}
 	}
 
+	// force download Steam achievements button
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceDownloadSteamAchievements))
+	{
+		// first we only set this to true, doesn't do anything else
+	}
+	// if the user is sure, override the old achievements with the new ones and save
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceDownloadSteamAchievementsSafetyCheck))
+	{
+		if (auto* platformClass = UAchievementPlatformsClass::Get())
+		{
+			// if Steam hadn't started yet, we'll need to start it first
+			if (!platformClass->achievementPlatformInitialized)
+			{
+				platformClass->InitializePlatform(m_achievementPlatform);
+			}
+			// empty the original achievements map
+			achievementsData.Empty();
+			// fill it with the platform's achievements
+			achievementsData = platformClass->GetPlatformAchievementsAsAchievementDataMap();
+
+			AttemptSave();
+
+			bForceDownloadSteamAchievements = false;
+			bForceDownloadSteamAchievementsSafetyCheck = false;
+		}
+	}
+
 	// TEMP BUTTON!!!!!!!!!! DELETE THIS ONCE DONE TESTING!
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, progressStuff))
 	{
@@ -126,7 +154,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		}
 	}
 
-
+#pragma endregion
 	// If the save slot data has been modified, also update that of the USaveSystem's
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(FSaveSlotSettings, slotName) ||
 			 changedPropertyName == GET_MEMBER_NAME_CHECKED(FSaveSlotSettings, slotIndex))
@@ -354,7 +382,7 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 		{
 			achievementProgress->progress += increase;
 		}
-		UAchievementPlatformsClass::Get()->SetPlatformAchievementProgress(achievement->platformData, achievementProgress->progress, achievementProgress->bIsAchievementUnlocked);
+		UAchievementPlatformsClass::SetPlatformAchievementProgress(achievement->platformData, achievementProgress->progress, achievementProgress->bIsAchievementUnlocked);
 
 		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%f'"), *achievementId, achievementProgress->progress);
 		return true;
@@ -393,6 +421,7 @@ void UAchievementManagerSubSystem::OnWorldCleanup(const UWorld* world, bool bSes
 			{
 				if (const auto* platformClass = UAchievementPlatformsClass::Get())
 				{
+					UE_LOG(AchievementPlatformLog, Log, TEXT("Starting platform shutdown process..."));
 					platformClass->ShutdownPlatform();
 					plugin->bHasPlatformShutDown = true;
 				}

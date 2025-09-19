@@ -71,7 +71,7 @@ public:
 
 USTRUCT(BlueprintType)
 // this struct has all the data that is inside the developer settings, ReadOnly for blueprints
-struct ACHIEVEMENTPLUGIN_API FAchievementSettings : public FLinkedStruct
+struct ACHIEVEMENTPLUGIN_API FAchievementData : public FLinkedStruct
 {
 	GENERATED_BODY()
 public:
