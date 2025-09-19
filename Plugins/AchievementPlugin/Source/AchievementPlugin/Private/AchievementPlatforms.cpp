@@ -95,7 +95,6 @@ TMap<FString, FAchievementData> UAchievementPlatformsClass::GetPlatformAchieveme
 		}
 		default:break;
 	}
-	UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Could not retrieve platform achievements!"));
 	return TMap<FString, FAchievementData>();
 }
 

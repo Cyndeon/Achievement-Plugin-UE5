@@ -64,6 +64,32 @@ int32 UAchievementPluginSettings::GetLinkIDByAchievementID(const FString& achiev
 
 #if WITH_EDITOR
 
+void UAchievementPluginSettings::OverrideAchievementsWithThoseFromSelectedPlatform()
+{
+	if (auto* platformClass = UAchievementPlatformsClass::Get())
+	{
+		// if Steam hadn't started yet, we'll need to start it first
+		if (!platformClass->achievementPlatformInitialized)
+		{
+			platformClass->InitializePlatform(m_achievementPlatform);
+		}
+		// store the received achievements in a separate map for now
+		const auto platformAchievements = platformClass->GetPlatformAchievementsAsAchievementDataMap();
+		// if there are received achievements, empty the map we have and instead fill it with the platform's
+		if (platformAchievements.Num() > 0)
+		{
+			achievementsData.Empty();
+			achievementsData = platformAchievements;
+		}
+		else
+		{
+			UE_LOG(AchievementPlatformLog, Warning, TEXT("Could not download achievements from the selected platform."));
+		}
+
+		AttemptSave();
+	}
+}
+
 void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent)
 {
 	const FName changedPropertyName = propertyChangedEvent.GetPropertyName();
@@ -119,23 +145,10 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	// if the user is sure, override the old achievements with the new ones and save
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceDownloadSteamAchievementsSafetyCheck))
 	{
-		if (auto* platformClass = UAchievementPlatformsClass::Get())
-		{
-			// if Steam hadn't started yet, we'll need to start it first
-			if (!platformClass->achievementPlatformInitialized)
-			{
-				platformClass->InitializePlatform(m_achievementPlatform);
-			}
-			// empty the original achievements map
-			achievementsData.Empty();
-			// fill it with the platform's achievements
-			achievementsData = platformClass->GetPlatformAchievementsAsAchievementDataMap();
+		OverrideAchievementsWithThoseFromSelectedPlatform();
 
-			AttemptSave();
-
-			bForceDownloadSteamAchievements = false;
-			bForceDownloadSteamAchievementsSafetyCheck = false;
-		}
+		bForceDownloadSteamAchievements = false;
+		bForceDownloadSteamAchievementsSafetyCheck = false;
 	}
 
 	// TEMP BUTTON!!!!!!!!!! DELETE THIS ONCE DONE TESTING!

@@ -114,6 +114,7 @@ public:
 
 private:
 	void UpdateRuntimeStats();
+	void OverrideAchievementsWithThoseFromSelectedPlatform();
 #endif
 	// this is only used to "generate" the next ID for achievements
 	UPROPERTY(config)
