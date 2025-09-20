@@ -125,6 +125,8 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 		newAchievement.displayName = FText::FromString(SteamUserStats()->GetAchievementDisplayAttribute(achievementID, "name"));
 		newAchievement.description = FText::FromString(SteamUserStats()->GetAchievementDisplayAttribute(achievementID, "desc"));
 
+		// ICONS NEXT!
+
 		// Set platform data
 		newAchievement.platformData.steamAchievementID = FString(ANSI_TO_TCHAR(achievementID));
 		// stats cannot be downloaded with the achievement so these will have to be set manually

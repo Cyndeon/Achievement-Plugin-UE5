@@ -49,7 +49,7 @@ bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& loc
 }
 
 bool UAchievementPluginBPLibrary::SaveAchievementProgressAsync()
-{
+	{
 	const auto* manager = GetManager();
 	return GetManager()->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
 }

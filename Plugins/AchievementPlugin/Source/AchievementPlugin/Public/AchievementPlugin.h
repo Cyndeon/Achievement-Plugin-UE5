@@ -74,6 +74,7 @@ public:
 			  ToolTip = "Key: Name used for modifying achievementsData in Blueprint Nodes, Value: Achievement settings"))
 	TMap<FString, FAchievementData> achievementsData;
 
+public:
 	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement Settings", meta = (DisplayName = "Cleanup Achievements on Load",
 			  ToolTip = "If enabled, will delete any achievement progress for achievements that no longer exist"))
 	bool bCleanupAchievements = true;
@@ -106,6 +107,7 @@ public:
 #endif
 
 #if WITH_EDITOR
+	void CreateAchievement(const FString& localID, const FAchievementData& achievement);
 	// Override to detect when the property is clicked
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent) override;
 

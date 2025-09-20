@@ -63,6 +63,19 @@ int32 UAchievementPluginSettings::GetLinkIDByAchievementID(const FString& achiev
 }
 
 #if WITH_EDITOR
+void UAchievementPluginSettings::CreateAchievement(const FString& localID, const FAchievementData& achievement)
+{
+	const auto linkID = m_nextLinkID++;
+
+	// make a copy and then set the link ID
+	auto achievementWithLinkId = achievement;
+	achievementWithLinkId.OverrideLinkID(linkID);
+	achievementsData.Add(localID, achievementWithLinkId);
+
+	// also update the progress Map
+	auto* manager = UAchievementManagerSubSystem::Get();
+	manager->achievementsProgress.Add(linkID, FAchievementProgress());
+}
 
 void UAchievementPluginSettings::OverrideAchievementsWithThoseFromSelectedPlatform()
 {
@@ -79,7 +92,10 @@ void UAchievementPluginSettings::OverrideAchievementsWithThoseFromSelectedPlatfo
 		if (platformAchievements.Num() > 0)
 		{
 			achievementsData.Empty();
-			achievementsData = platformAchievements;
+			for (const auto& achievement : platformAchievements)
+			{
+				CreateAchievement(achievement.Key, achievement.Value);
+			}
 		}
 		else
 		{
