@@ -5,7 +5,10 @@
 
 #include "AchievementLogCategory.h"
 #include "AchievementPlugin.h"
-#include "SteamPlatformAchievements.h"
+
+// platform includes
+#include "Platforms/SteamPlatformAchievements.h"
+#include "Platforms/EpicGamesPlatformAchievements.h"
 
 EAchievementPlatforms UAchievementPlatformsClass::selectedPlatform;
 bool UAchievementPlatformsClass::achievementPlatformInitialized = false;
@@ -18,6 +21,11 @@ bool UAchievementPlatformsClass::InitializePlatform(const EAchievementPlatforms 
 		case STEAM:
 		{
 			achievementPlatformInitialized = SteamAchievementsClass::Initialize();
+			break;
+		}
+		case EOS:
+		{
+			achievementPlatformInitialized = EpicGamesAchievementsClass::Initialize();
 			break;
 		}
 
@@ -35,9 +43,9 @@ void UAchievementPlatformsClass::ShutdownPlatform()
 			SteamAchievementsClass::Shutdown();
 			break;
 		}
-		// no shutdown required
-		case LOCALONLY:
+		case EOS:
 		{
+			EpicGamesAchievementsClass::Shutdown();
 			break;
 		}
 
@@ -45,13 +53,17 @@ void UAchievementPlatformsClass::ShutdownPlatform()
 	}
 }
 
-bool UAchievementPlatformsClass::SetPlatformAchievementProgress(const FAchievementPlatformData& platformData, const int32 progress, const bool unlocked)
+bool UAchievementPlatformsClass::SetPlatformAchievementProgress(const FAchievementPlatformData& platformData, const float progress, const bool unlocked)
 {
 	switch (selectedPlatform)
 	{
 		case STEAM:
 		{
 			return SteamAchievementsClass::SetSteamAchievementProgress(platformData, progress, unlocked);
+		}
+		case EOS:
+		{
+			return EpicGamesAchievementsClass::SetEpicAchievementProgress(platformData, progress, unlocked);
 		}
 
 		default:break;
@@ -67,6 +79,10 @@ bool UAchievementPlatformsClass::PlatformDeleteAchievementProgress(const FAchiev
 		{
 			return SteamAchievementsClass::DeleteSteamAchievementProgress(platformData);
 		}
+		case EOS:
+		{
+			return EpicGamesAchievementsClass::DeleteEpicAchievementProgress(platformData);
+		}
 		default:break;
 	}
 	return true;
@@ -79,6 +95,10 @@ bool UAchievementPlatformsClass::PlatformDeleteAllAchievementProgress()
 		case STEAM:
 		{
 			return SteamAchievementsClass::DeleteAllSteamAchievementProgress();
+		}
+		case EOS:
+		{
+			return EpicGamesAchievementsClass::DeleteAllEpicAchievementProgress();
 		}
 		default:break;
 	}
@@ -93,6 +113,10 @@ TMap<FString, FAchievementData> UAchievementPlatformsClass::GetPlatformAchieveme
 		{
 			return SteamAchievementsClass::GetSteamAchievementsAsAchievementDataMap();
 		}
+		case EOS:
+		{
+			return EpicGamesAchievementsClass::GetEpicAchievementsAsAchievementDataMap();
+		}
 		default:break;
 	}
 	return TMap<FString, FAchievementData>();
@@ -105,6 +129,11 @@ void UAchievementPlatformsClass::Tick(float DeltaTime)
 		case STEAM:
 		{
 			SteamAchievementsClass::Tick();
+			break;
+		}
+		case EOS:
+		{
+			EpicGamesAchievementsClass::Tick();
 		}
 		default:break;
 	}
@@ -133,6 +162,6 @@ void UAchievementPlatformsClass::CreateSteamAppIdFile(const int32 appId)
 	}
 	else
 	{
-		UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Failed to create steam_appid.txt file"));
+		UE_LOG(AchievementPlatformLog, Error, TEXT(" Failed to create steam_appid.txt file"));
 	}
 }

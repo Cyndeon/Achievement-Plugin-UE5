@@ -1,4 +1,4 @@
-#include "SteamPlatformAchievements.h"
+#include "Platforms/SteamPlatformAchievements.h"
 
 #include "AchievementLogCategory.h"
 #include "AchievementPlatforms.h"
@@ -33,7 +33,7 @@ bool SteamAchievementsClass::Initialize()
 
 	if (!SteamAPI_IsSteamRunning())
 	{
-		UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Steam is not running!"));
+		UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam is not running!"));
 		return false;
 	}
 
@@ -48,22 +48,22 @@ bool SteamAchievementsClass::Initialize()
 			break;
 
 		case k_ESteamAPIInitResult_FailedGeneric:
-			UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Steam Init Failed: Generic failure"));
+			UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam Init Failed: Generic failure"));
 			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
 			return false;
 
 		case k_ESteamAPIInitResult_NoSteamClient:
-			UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Steam Init Failed: No Steam client running"));
+			UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam Init Failed: No Steam client running"));
 			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
 			return false;
 
 		case k_ESteamAPIInitResult_VersionMismatch:
-			UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Steam Init Failed: Version mismatch between client and SDK"));
+			UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam Init Failed: Version mismatch between client and SDK"));
 			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
 			return false;
 
 		default:
-			UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Steam Init Failed: Unknown error %d"), (int32)initResult);
+			UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam Init Failed: Unknown error %d"), (int32)initResult);
 			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
 			return false;
 	}
@@ -103,7 +103,7 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 {
 	if (!GetPlatformInitialized())
 	{
-		UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Steam API not initialized yet, cannot get achievements!"));
+		UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam API not initialized yet, cannot get achievements!"));
 		return TMap<FString, FAchievementData>();
 	}
 
@@ -192,7 +192,7 @@ bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatf
 
 		return bSuccess;
 	}
-	UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Steam API wasn't initialized properly!"));
+	UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam API wasn't initialized properly!"));
 	return false;
 }
 
@@ -282,7 +282,7 @@ void SteamCallbacksClass::OnUserStatsStored(UserStatsStored_t* pCallback)
 		}
 		else
 		{
-			UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: Failed to store user stats: %d"), pCallback->m_eResult);
+			UE_LOG(AchievementPlatformLog, Error, TEXT(" Failed to store user stats: %d"), pCallback->m_eResult);
 		}
 	}
 }

@@ -43,6 +43,11 @@ class UAchievementPluginSettings : public UObject
 	{
 		return m_achievementPlatform == EAchievementPlatforms::STEAM;
 	}
+	UFUNCTION()
+	bool IsEpicPlatform() const
+	{
+		return m_achievementPlatform == EAchievementPlatforms::EOS;
+	}
 
 public:
 	UAchievementPluginSettings() = default;
@@ -64,6 +69,10 @@ public:
 		return m_initializePlatform;
 	}
 	int32 GetLinkIDByAchievementID(const FString& achievementId);
+	const FEpicGamesInfo& GetEOSInfo()
+	{
+		return m_EOSInfo;
+	}
 
 	UPROPERTY(config, EditAnywhere, Category = "Save Slot Settings", meta = (DisplayName = "Default Save Slot Settings",
 			  Tooltip = "The defaults used for the saved profiles for achievementsData. Modifying this can cause old achievement progress to break"))
@@ -131,8 +140,13 @@ private:
 			  Tooltip = "This will Initialize and Deinitialize the platform's API, disable this if you want to set it up yourself! If setting up manually, make sure to also call AchievementPlatformInitialized in your level blueprint!"))
 	bool m_initializePlatform = true;
 
+	// Steam
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Steam App ID", EditCondition = "IsSteamPlatform", EditConditionHides))
 	int32 m_steamAppID;
+
+	// EOS
+	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "EOS Info", EditCondition = "IsEpicPlatform", EditConditionHides))
+	FEpicGamesInfo m_EOSInfo;
 };
 
 class UAchievementSaveManager;

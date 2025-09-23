@@ -66,7 +66,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Epic",
 			  meta = (DisplayName = "Epic Achievement ID"))
-	FString epicID = "";
+	FString epicAchievementID = "";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Epic",
+			  meta = (DisplayName = "Epic Stat ID", Tooltip = "For progressive achievements (using Stats), please enter the Stat name used for tracking progress!"))
+	FString epicStatID = "";
 };
 
 USTRUCT(BlueprintType)
@@ -118,4 +122,38 @@ public:
 	FString slotName = "Achievements";
 	UPROPERTY(config, EditAnywhere, Category = "Achievements", meta = (DisplayName = "Save Slot"))
 	int32 slotIndex = 0;
+};
+
+// the information needed to initialize EOS SDK
+USTRUCT(BlueprintType)
+struct FEpicGamesInfo
+{
+	GENERATED_BODY()
+public:
+	// mostly copied from EOS, just without the information filled in and I added UPROPERTY
+	/** The product id for the running application, found on the dev portal */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms", meta = (DisplayName = "Product ID"))
+	FString ProductId;
+	/** The application id for the running application, found on the dev portal */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms", meta = (DisplayName = "Application ID"))
+	FString ApplicationId;
+	/** The sandbox id for the running application, found on the dev portal */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms", meta = (DisplayName = "Sandbox ID"))
+	FString SandboxId;
+	/** The deployment id for the running application, found on the dev portal */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms", meta = (DisplayName = "Deployment ID"))
+	FString DeploymentId;
+	/** Client id of the service permissions entry, found on the dev portal */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms", meta = (DisplayName = "Client Credentials ID"))
+	FString ClientCredentialsId;
+	/** Client secret for accessing the set of permissions, found on the dev portal */
+	// Never explicitly share the client secret, especially when the client is used in a trusted server environment!!!!!
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms", meta = (DisplayName = "Client Secret Credentials ID"))
+	FString ClientCredentialsSecret;
+	/** Game name */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms", meta = (DisplayName = "Game Name"))
+	FString GameName;
+	/** Encryption key */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms", meta = (DisplayName = "Encryption Key (Optional)"))
+	FString EncryptionKey;
 };

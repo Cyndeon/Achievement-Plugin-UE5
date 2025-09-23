@@ -25,7 +25,7 @@ public:
 	bool InitializePlatform(const EAchievementPlatforms platform);
 	static void ShutdownPlatform();
 
-	static bool SetPlatformAchievementProgress(const FAchievementPlatformData& platformData, int32 progress, bool unlocked);
+	static bool SetPlatformAchievementProgress(const FAchievementPlatformData& platformData, float progress, bool unlocked);
 	static bool PlatformDeleteAchievementProgress(const FAchievementPlatformData& platformData);
 	static bool PlatformDeleteAllAchievementProgress();
 

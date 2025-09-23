@@ -131,5 +131,5 @@ void UAchievementPluginBPLibrary::AchievementPlatformInitialized(const EAchievem
 		return;
 	}
 
-	UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR: AchievementPlatformClass cannot be found!"));
+	UE_LOG(AchievementPlatformLog, Error, TEXT(" AchievementPlatformClass cannot be found!"));
 }

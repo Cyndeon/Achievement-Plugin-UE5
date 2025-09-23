@@ -28,8 +28,9 @@ public class AchievementPlugin : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
-                "DeveloperSettings"
-                // Removed PropertyEditor and ToolMenus - they're editor-only!
+                "EngineSettings",
+                "DeveloperSettings",
+                "EOSSDK"
             }
         );
 
@@ -64,6 +65,7 @@ public class AchievementPlugin : ModuleRules
         );
 
         // only works for win64 and with Steam, add more options later!
+        // Steam
         var steamPath = Path.Combine(ModuleDirectory, "ThirdParty", "steamworks_sdk_162", "sdk");
 
         PublicAdditionalLibraries.Add(Path.Combine(steamPath, "redistributable_bin", "win64", "steam_api64.lib"));
