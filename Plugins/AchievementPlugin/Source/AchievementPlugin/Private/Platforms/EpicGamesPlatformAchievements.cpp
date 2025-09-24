@@ -389,7 +389,7 @@ TMap<FString, FAchievementData> EpicGamesAchievementsClass::GetEpicAchievementsA
 	EOS_Achievements_GetAchievementDefinitionCountOptions CountOptions = {};
 	CountOptions.ApiVersion = EOS_ACHIEVEMENTS_GETACHIEVEMENTDEFINITIONCOUNT_API_LATEST;
 
-	uint32_t AchievementCount = EOS_Achievements_GetAchievementDefinitionCount(
+	const uint32_t AchievementCount = EOS_Achievements_GetAchievementDefinitionCount(
 		EOS_Platform_GetAchievementsInterface(m_platformHandle),
 		&CountOptions
 	);
@@ -403,30 +403,30 @@ TMap<FString, FAchievementData> EpicGamesAchievementsClass::GetEpicAchievementsA
 		CopyOptions.ApiVersion = EOS_ACHIEVEMENTS_COPYACHIEVEMENTDEFINITIONV2BYINDEX_API_LATEST;
 		CopyOptions.AchievementIndex = i;
 
-		EOS_Achievements_DefinitionV2* AchievementDef = nullptr;
-		EOS_EResult Result = EOS_Achievements_CopyAchievementDefinitionV2ByIndex(
+		EOS_Achievements_DefinitionV2* achievementDef = nullptr;
+		const EOS_EResult result = EOS_Achievements_CopyAchievementDefinitionV2ByIndex(
 			EOS_Platform_GetAchievementsInterface(m_platformHandle),
 			&CopyOptions,
-			&AchievementDef
+			&achievementDef
 		);
 
-		if (Result == EOS_EResult::EOS_Success && AchievementDef)
+		if (result == EOS_EResult::EOS_Success && achievementDef)
 		{
 			FAchievementData newAchievement;
 
 			// Convert EOS data to your format
-			FString achievementID = FString(AchievementDef->AchievementId);
-			newAchievement.isHidden = static_cast<bool>(AchievementDef->bIsHidden);
-			newAchievement.displayName = FText::FromString(FString(AchievementDef->LockedDisplayName));
-			newAchievement.description = FText::FromString(FString(AchievementDef->LockedDescription));
+			FString achievementID = FString(achievementDef->AchievementId);
+			newAchievement.isHidden = static_cast<bool>(achievementDef->bIsHidden);
+			newAchievement.displayName = FText::FromString(FString(achievementDef->LockedDisplayName));
+			newAchievement.description = FText::FromString(FString(achievementDef->LockedDescription));
 
 			// Set platform data
 			newAchievement.platformData.epicAchievementID = achievementID;
-			if (AchievementDef->StatThresholds && AchievementDef->StatThresholdsCount > 0)
+			if (achievementDef->StatThresholds && achievementDef->StatThresholdsCount > 0)
 			{
 				// If it's stat-based, get the stat name and threshold
-				newAchievement.platformData.epicStatID = FString(AchievementDef->StatThresholds[0].Name);
-				newAchievement.progressGoal = AchievementDef->StatThresholds[0].Threshold;
+				newAchievement.platformData.epicStatID = FString(achievementDef->StatThresholds[0].Name);
+				newAchievement.progressGoal = achievementDef->StatThresholds[0].Threshold;
 			}
 			else
 			{
@@ -441,7 +441,7 @@ TMap<FString, FAchievementData> EpicGamesAchievementsClass::GetEpicAchievementsA
 				   *achievementID, *newAchievement.displayName.ToString());
 
 			// Release the achievement definition
-			EOS_Achievements_DefinitionV2_Release(AchievementDef);
+			EOS_Achievements_DefinitionV2_Release(achievementDef);
 		}
 	}
 
