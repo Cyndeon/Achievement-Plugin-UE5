@@ -15,12 +15,87 @@
 EOS_HPlatform EpicGamesAchievementsClass::m_platformHandle = nullptr;
 EOS_ProductUserId EpicGamesAchievementsClass::m_productUserId = nullptr;
 TUniquePtr<EpicGamesAchievementsClass> EpicGamesAchievementsClass::m_instance = nullptr;
+bool EpicGamesAchievementsClass::m_eosInitialized = false;
+
+void EpicGamesAchievementsClass::VerifyAchievements()
+{
+	if (!m_productUserId) return;
+
+	// Query player achievements to see what's actually unlocked
+	EOS_Achievements_QueryPlayerAchievementsOptions QueryOptions = {};
+	QueryOptions.ApiVersion = EOS_ACHIEVEMENTS_QUERYPLAYERACHIEVEMENTS_API_LATEST;
+	QueryOptions.LocalUserId = m_productUserId;
+	QueryOptions.TargetUserId = m_productUserId;
+
+	EOS_Achievements_QueryPlayerAchievements(
+		EOS_Platform_GetAchievementsInterface(m_platformHandle),
+		&QueryOptions,
+		m_instance.Get(),
+		[](const EOS_Achievements_OnQueryPlayerAchievementsCompleteCallbackInfo* Data)
+		{
+			if (Data->ResultCode == EOS_EResult::EOS_Success)
+			{
+				UE_LOG(AchievementPlatformLog, Warning, TEXT("Successfully queried achievements"));
+
+				// Get the count of achievements
+				EOS_Achievements_GetPlayerAchievementCountOptions countOptions = {};
+				countOptions.ApiVersion = EOS_ACHIEVEMENTS_GETPLAYERACHIEVEMENTCOUNT_API_LATEST;
+				countOptions.UserId = Data->LocalUserId;
+
+				const uint32_t achievementCount = EOS_Achievements_GetPlayerAchievementCount(
+					EOS_Platform_GetAchievementsInterface(m_platformHandle),
+					&countOptions
+				);
+
+				UE_LOG(AchievementPlatformLog, Warning, TEXT("Found %d achievements"), achievementCount);
+
+				// Check each achievement
+				for (uint32_t i = 0; i < achievementCount; i++)
+				{
+					EOS_Achievements_CopyPlayerAchievementByIndexOptions copyOptions = {};
+					copyOptions.ApiVersion = EOS_ACHIEVEMENTS_COPYPLAYERACHIEVEMENTBYINDEX_API_LATEST;
+					copyOptions.LocalUserId = Data->LocalUserId;
+					copyOptions.TargetUserId = Data->TargetUserId;
+					copyOptions.AchievementIndex = i;
+
+					EOS_Achievements_PlayerAchievement* achievement = nullptr;
+					const EOS_EResult result = EOS_Achievements_CopyPlayerAchievementByIndex(
+						EOS_Platform_GetAchievementsInterface(m_platformHandle),
+						&copyOptions,
+						&achievement
+					);
+
+					if (result == EOS_EResult::EOS_Success && achievement)
+					{
+						const bool bUnlocked = (achievement->UnlockTime != EOS_ACHIEVEMENTS_ACHIEVEMENT_UNLOCKTIME_UNDEFINED);
+						UE_LOG(AchievementPlatformLog, Warning, TEXT("Achievement '%hs': %s"),
+							   achievement->AchievementId, bUnlocked ? TEXT("UNLOCKED") : TEXT("LOCKED"));
+
+						EOS_Achievements_PlayerAchievement_Release(achievement);
+					}
+				}
+			}
+		}
+	);
+}
+
+void LogProductUserId(const EOS_ProductUserId& id)
+{
+	// Convert Product User ID to string for logging
+	char productUserIdString[EOS_PRODUCTUSERID_MAX_LENGTH + 1];
+	int32_t bufferLen = sizeof(productUserIdString);
+	EOS_ProductUserId_ToString(id, productUserIdString, &bufferLen);
+
+	UE_LOG(AchievementPlatformLog, Warning, TEXT("Your Product User ID: %hs"), productUserIdString);
+}
+
 
 void EpicGamesAchievementsClass::OnCreateUserComplete(const EOS_Connect_CreateUserCallbackInfo* data)
 {
 	if (data->ResultCode == EOS_EResult::EOS_Success)
 	{
 		m_productUserId = data->LocalUserId;
+		LogProductUserId(m_productUserId);
 		UE_LOG(AchievementPlatformLog, Log, TEXT("EOS Connect User Created"));
 	}
 	else
@@ -34,6 +109,7 @@ void EpicGamesAchievementsClass::OnConnectLoginComplete(const EOS_Connect_LoginC
 	if (data->ResultCode == EOS_EResult::EOS_Success)
 	{
 		m_productUserId = data->LocalUserId;  // Cache Product User ID
+		LogProductUserId(m_productUserId);
 		UE_LOG(AchievementPlatformLog, Log, TEXT("EOS Connect Login Success"));
 	}
 	else if (data->ResultCode == EOS_EResult::EOS_InvalidUser)
@@ -161,12 +237,15 @@ void EpicGamesAchievementsClass::OnAchievementUnlockComplete(
 		// If the code gets here, there was an error; handle this however you need for your program.
 		UE_LOG(AchievementPlatformLog, Error, TEXT(" Epic could not unlock achievement, error code '%d' - %hs"), static_cast<int>(data->ResultCode), EOS_EResult_ToString(data->ResultCode));
 	}
+	VerifyAchievements();
 }
 
 
-bool EpicGamesAchievementsClass::Initialize()
+bool EpicGamesAchievementsClass::InitializeEOS()
 {
 	m_instance = MakeUnique<EpicGamesAchievementsClass>();
+	GetPlatformInitialized() = false;
+	m_eosInitialized = false;
 
 	// due to a lack of proper help on the EOS SDK, I asked Claude.AI to help write the Init
 	const auto& info = UAchievementPluginSettings::Get()->GetEOSInfo();
@@ -203,7 +282,9 @@ bool EpicGamesAchievementsClass::Initialize()
 	EOS_Platform_Options platformOptions = {};
 	platformOptions.ApiVersion = EOS_PLATFORM_OPTIONS_API_LATEST;
 	platformOptions.bIsServer = EOS_FALSE;
+#if WITH_EDITOR
 	platformOptions.Flags = EOS_PF_DISABLE_OVERLAY;
+#endif
 
 	platformOptions.ProductId = TCHAR_TO_UTF8(*info.ProductId);
 	platformOptions.SandboxId = TCHAR_TO_UTF8(*info.SandboxId);
@@ -220,6 +301,7 @@ bool EpicGamesAchievementsClass::Initialize()
 	}
 
 	GetPlatformInitialized() = true;
+	m_eosInitialized = true;
 	UE_LOG(AchievementPlatformLog, Log, TEXT("Successfully created EOS platform."));
 
 
@@ -230,7 +312,7 @@ bool EpicGamesAchievementsClass::Initialize()
 	// Use Epic Games Launcher credentials (if user is logged in)
 	EOS_Auth_Credentials credentials = {};
 	credentials.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
-	credentials.Type = EOS_ELoginCredentialType::EOS_LCT_PersistentAuth;	
+	credentials.Type = EOS_ELoginCredentialType::EOS_LCT_PersistentAuth;
 	credentials.Token = nullptr;
 	credentials.Id = nullptr;
 
@@ -263,20 +345,112 @@ void EpicGamesAchievementsClass::Shutdown()
 
 void EpicGamesAchievementsClass::Tick()
 {
-	if (m_platformHandle)
+	if (m_platformHandle && m_eosInitialized)
 	{
 		EOS_Platform_Tick(m_platformHandle);
 	}
 }
+static void EOS_CALL OnQueryDefinitionsCompleteDummy(const EOS_Achievements_OnQueryDefinitionsCompleteCallbackInfo* Data)
+{
+	UE_LOG(AchievementPlatformLog, Log, TEXT("Query definitions callback triggered with result: %hs"),
+		   EOS_EResult_ToString(Data->ResultCode));
+}
 
 TMap<FString, FAchievementData> EpicGamesAchievementsClass::GetEpicAchievementsAsAchievementDataMap()
 {
-	return TMap<FString, FAchievementData>();
+	if (!GetPlatformInitialized() || !m_platformHandle || !m_productUserId)
+	{
+		UE_LOG(AchievementPlatformLog, Error, TEXT("EOS not initialized or user not authenticated"));
+		return TMap<FString, FAchievementData>();
+	}
+
+	TMap<FString, FAchievementData> achievementsData = TMap<FString, FAchievementData>();
+
+	// First query achievement definitions
+	EOS_Achievements_QueryDefinitionsOptions queryDefOptions = {};
+	queryDefOptions.ApiVersion = EOS_ACHIEVEMENTS_QUERYDEFINITIONS_API_LATEST;
+	queryDefOptions.LocalUserId = m_productUserId;
+
+	EOS_Achievements_QueryDefinitions(
+		EOS_Platform_GetAchievementsInterface(m_platformHandle),
+		&queryDefOptions,
+		nullptr,
+		OnQueryDefinitionsCompleteDummy
+	);
+
+	// we need to make sure that the query has finished before succeeding
+	// this is bad, don't do this under regular circumstances!
+	// I do it here because I know that this is something that only happens like once, and only in editor, nowhere else!
+	// do as I say, not as I do
+	Tick();
+	FPlatformProcess::Sleep(3.0f);
+
+	// Get achievement count
+	EOS_Achievements_GetAchievementDefinitionCountOptions CountOptions = {};
+	CountOptions.ApiVersion = EOS_ACHIEVEMENTS_GETACHIEVEMENTDEFINITIONCOUNT_API_LATEST;
+
+	uint32_t AchievementCount = EOS_Achievements_GetAchievementDefinitionCount(
+		EOS_Platform_GetAchievementsInterface(m_platformHandle),
+		&CountOptions
+	);
+
+	UE_LOG(AchievementPlatformLog, Log, TEXT("Found %d EOS achievements"), AchievementCount);
+
+	// Iterate through each achievement
+	for (uint32_t i = 0; i < AchievementCount; ++i)
+	{
+		EOS_Achievements_CopyAchievementDefinitionV2ByIndexOptions CopyOptions = {};
+		CopyOptions.ApiVersion = EOS_ACHIEVEMENTS_COPYACHIEVEMENTDEFINITIONV2BYINDEX_API_LATEST;
+		CopyOptions.AchievementIndex = i;
+
+		EOS_Achievements_DefinitionV2* AchievementDef = nullptr;
+		EOS_EResult Result = EOS_Achievements_CopyAchievementDefinitionV2ByIndex(
+			EOS_Platform_GetAchievementsInterface(m_platformHandle),
+			&CopyOptions,
+			&AchievementDef
+		);
+
+		if (Result == EOS_EResult::EOS_Success && AchievementDef)
+		{
+			FAchievementData newAchievement;
+
+			// Convert EOS data to your format
+			FString achievementID = FString(AchievementDef->AchievementId);
+			newAchievement.isHidden = static_cast<bool>(AchievementDef->bIsHidden);
+			newAchievement.displayName = FText::FromString(FString(AchievementDef->LockedDisplayName));
+			newAchievement.description = FText::FromString(FString(AchievementDef->LockedDescription));
+
+			// Set platform data
+			newAchievement.platformData.epicAchievementID = achievementID;
+			if (AchievementDef->StatThresholds && AchievementDef->StatThresholdsCount > 0)
+			{
+				// If it's stat-based, get the stat name and threshold
+				newAchievement.platformData.epicStatID = FString(AchievementDef->StatThresholds[0].Name);
+				newAchievement.progressGoal = AchievementDef->StatThresholds[0].Threshold;
+			}
+			else
+			{
+				// Binary achievement
+				newAchievement.progressGoal = 1;
+			}
+
+			// Add to map
+			achievementsData.Add(achievementID, newAchievement);
+
+			UE_LOG(AchievementPlatformLog, Log, TEXT("Added EOS achievement: %s - %s"),
+				   *achievementID, *newAchievement.displayName.ToString());
+
+			// Release the achievement definition
+			EOS_Achievements_DefinitionV2_Release(AchievementDef);
+		}
+	}
+
+	return achievementsData;
 }
 
 bool EpicGamesAchievementsClass::SetEpicAchievementProgress(const FAchievementPlatformData& achievementData, float progress, bool unlocked)
 {
-	if (GetPlatformInitialized() && m_platformHandle)
+	if (GetPlatformInitialized() && m_platformHandle && m_productUserId)
 	{
 		bool bSuccess = false;
 
@@ -296,7 +470,7 @@ bool EpicGamesAchievementsClass::SetEpicAchievementProgress(const FAchievementPl
 			EOS_Achievements_UnlockAchievements(
 				EOS_Platform_GetAchievementsInterface(m_platformHandle),
 				&unlockOptions,
-				nullptr,
+				m_instance.Get(),
 				OnAchievementUnlockComplete
 			);
 
@@ -323,8 +497,8 @@ bool EpicGamesAchievementsClass::SetEpicAchievementProgress(const FAchievementPl
 			EOS_Stats_IngestStat(
 				EOS_Platform_GetStatsInterface(m_platformHandle),
 				&ingestOptions,
-				nullptr,
-				OnIngestStatsComplete // No callback for now
+				m_instance.Get(),
+				OnIngestStatsComplete
 			);
 
 
@@ -350,11 +524,13 @@ bool EpicGamesAchievementsClass::SetEpicAchievementProgress(const FAchievementPl
 
 bool EpicGamesAchievementsClass::DeleteEpicAchievementProgress(const FAchievementPlatformData& achievementData)
 {
+	// not really possible using EOS, only stats
 	return false;
 }
 
 bool EpicGamesAchievementsClass::DeleteAllEpicAchievementProgress()
 {
+	// not really possible using EOS, only stats
 	return false;
 }
 

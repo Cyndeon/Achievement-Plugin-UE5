@@ -25,7 +25,7 @@ bool UAchievementPlatformsClass::InitializePlatform(const EAchievementPlatforms 
 		}
 		case EOS:
 		{
-			achievementPlatformInitialized = EpicGamesAchievementsClass::Initialize();
+			achievementPlatformInitialized = EpicGamesAchievementsClass::InitializeEOS();
 			break;
 		}
 
@@ -124,6 +124,7 @@ TMap<FString, FAchievementData> UAchievementPlatformsClass::GetPlatformAchieveme
 
 void UAchievementPlatformsClass::Tick(float DeltaTime)
 {
+	if (!achievementPlatformInitialized) return;
 	switch (selectedPlatform)
 	{
 		case STEAM:

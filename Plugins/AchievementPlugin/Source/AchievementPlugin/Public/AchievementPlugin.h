@@ -91,24 +91,24 @@ public:
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
 			  Tooltip = "Enable this to update the runtime stats (progress) of the achievementsData"))
+
 	bool bLoadRuntimeStatsButton = false;
-	// TEMP DELETE
+
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Force Save Achievments"))
 	bool bForceSaveAchievements = false;
-	// TEMP DELETE
+
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Force Load Achievement Progress"))
 	bool bForceLoadAchievementProgress = false;
 
 
 	// Platform-dependant buttons
-	UPROPERTY(EditAnywhere, Category = "Achievements Platform Buttons", Transient, meta = (DisplayName = "Force Download Steam Achievements", 
-			  Tooltip="This will override all your achievements with those from Steam. Please note that Stats will still have to be set manually!",
-			  EditCondition = "IsSteamPlatform", EditConditionHides))
-	bool bForceDownloadSteamAchievements = false;
+	UPROPERTY(EditAnywhere, Category = "Achievements Platform Buttons", Transient, meta = (DisplayName = "Force Download Selected Platform Achievements", 
+			  Tooltip="This will override all your achievements with those from the selected platform. Please note that some variables will still have to be set manually!"))
+	bool bForceDownloadPlatformAchievements = false;
 	UPROPERTY(EditAnywhere, Category = "Achievements Platform Buttons", Transient, meta = (DisplayName = "This cannot be undone unless you make a backup of your current DefaultGame.ini!",
-			  Tooltip = "Start Download (might take a little bit depending on the amount of achievements!",
-			  EditCondition = "IsSteamPlatform && bForceDownloadSteamAchievements", EditConditionHides))
-	bool bForceDownloadSteamAchievementsSafetyCheck = false;
+			  Tooltip = "Start Download (might take a little bit depending on the amount of achievements adn selected platform)!",
+			  EditCondition = "bForceDownloadPlatformAchievements", EditConditionHides))
+	bool bForceDownloadPlatformAchievementsSafetyCheck = false;
 
 	// TEMP DELETE
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))

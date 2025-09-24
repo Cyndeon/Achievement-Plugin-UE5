@@ -81,7 +81,7 @@ void UAchievementPluginSettings::OverrideAchievementsWithThoseFromSelectedPlatfo
 {
 	if (auto* platformClass = UAchievementPlatformsClass::Get())
 	{
-		// if Steam hadn't started yet, we'll need to start it first
+		// if platform hadn't started yet, we'll need to start it first
 		if (!platformClass->achievementPlatformInitialized)
 		{
 			platformClass->InitializePlatform(m_achievementPlatform);
@@ -154,17 +154,18 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	}
 
 	// force download Steam achievements button
-	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceDownloadSteamAchievements))
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceDownloadPlatformAchievements))
 	{
 		// first we only set this to true, doesn't do anything else
+		// this will however, make the SafetyCheck button visible
 	}
 	// if the user is sure, override the old achievements with the new ones and save
-	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceDownloadSteamAchievementsSafetyCheck))
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceDownloadPlatformAchievementsSafetyCheck))
 	{
 		OverrideAchievementsWithThoseFromSelectedPlatform();
 
-		bForceDownloadSteamAchievements = false;
-		bForceDownloadSteamAchievementsSafetyCheck = false;
+		bForceDownloadPlatformAchievements = false;
+		bForceDownloadPlatformAchievementsSafetyCheck = false;
 	}
 
 	// TEMP BUTTON!!!!!!!!!! DELETE THIS ONCE DONE TESTING!

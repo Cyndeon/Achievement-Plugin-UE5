@@ -21,6 +21,7 @@ public:
 private:
 	static int32 m_appId;
 	static TUniquePtr<SteamCallbacksClass> m_steamCallbacksClass;
+	static bool m_steamInitialized;
 };
 
 class ACHIEVEMENTPLUGIN_API SteamCallbacksClass

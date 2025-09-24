@@ -12,7 +12,7 @@ class ACHIEVEMENTPLUGIN_API EpicGamesAchievementsClass
 {
 	static TUniquePtr<EpicGamesAchievementsClass> m_instance;
 public:
-	static bool Initialize();
+	static bool InitializeEOS();
 	static void Shutdown();
 	static void Tick();
 	static TMap<FString, FAchievementData> GetEpicAchievementsAsAchievementDataMap();
@@ -29,6 +29,10 @@ private:
 	static void EOS_CALL OnAchievementUnlockComplete(const EOS_Achievements_OnUnlockAchievementsCompleteCallbackInfo* data);
 	static void EOS_CALL OnCreateUserComplete(const EOS_Connect_CreateUserCallbackInfo* data);
 
+	// this will Log all found achievements
+	static void VerifyAchievements();
+
 	static EOS_HPlatform m_platformHandle;
 	static EOS_ProductUserId m_productUserId;
+	static bool m_eosInitialized;
 };

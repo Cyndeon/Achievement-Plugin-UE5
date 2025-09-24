@@ -33,6 +33,12 @@ public:
 
 	// overrides for the Tickable
 	virtual void Tick(float DeltaTime) override;
+
+	// we need this in order to retrieve achievements stats in the editor
+	virtual bool IsTickableInEditor() const override
+	{
+		return true;
+	}
 	virtual TStatId GetStatId() const override
 	{
 		RETURN_QUICK_DECLARE_CYCLE_STAT(UAchievementPlatformsClass, STATGROUP_Tickables);

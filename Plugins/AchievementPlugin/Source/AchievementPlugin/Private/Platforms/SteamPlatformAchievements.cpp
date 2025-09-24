@@ -6,6 +6,7 @@
 
 int32 SteamAchievementsClass::m_appId = 0;
 TUniquePtr<SteamCallbacksClass> SteamAchievementsClass::m_steamCallbacksClass = nullptr;
+bool SteamAchievementsClass::m_steamInitialized = false;
 
 void SteamUploadTypeNotSupported(const EAchievementUploadTypes& type)
 {
@@ -16,6 +17,7 @@ bool SteamAchievementsClass::Initialize()
 {
 	// just in case temporarily set it to false
 	GetPlatformInitialized() = false;
+	m_steamInitialized = false;
 
 	// create the steam callbacks 
 	m_steamCallbacksClass = MakeUnique<SteamCallbacksClass>();
@@ -80,6 +82,7 @@ bool SteamAchievementsClass::Initialize()
 			const auto bSuccess = static_cast<bool>(SteamUserStats()->RequestUserStats(SteamUser()->GetSteamID()));
 			UE_LOG(AchievementPlatformLog, Log, TEXT("RequestUserStats result: %s"), bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"));
 			GetPlatformInitialized() = true;
+			m_steamInitialized = true;
 
 			return bSuccess;
 		}
@@ -95,6 +98,7 @@ void SteamAchievementsClass::Shutdown()
 
 void SteamAchievementsClass::Tick()
 {
+	if (!m_steamInitialized) return;
 	// run Steam's callbacks
 	SteamAPI_RunCallbacks();
 }
