@@ -4,7 +4,7 @@
 	"VersionName": "1.0",
 	"FriendlyName": "AchievementPlugin",
 	"Description": "A plugin for creating local achievements as well as syncing them with Steam and/or Epic games",
-	"Category": "Other",
+	"Category": "Achievements",
 	"CreatedBy": "Justin Comans",
 	"CreatedByURL": "https://cyndeon.github.io/",
 	"DocsURL": "",

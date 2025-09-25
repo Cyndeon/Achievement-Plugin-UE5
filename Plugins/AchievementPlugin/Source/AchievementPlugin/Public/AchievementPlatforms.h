@@ -1,6 +1,8 @@
 #pragma once
 #include "AchievementPlatformsEnum.h"
 #include "AchievementStructs.h"
+#include "Tickable.h"
+#include "Engine/Engine.h"
 
 #include "AchievementPlatforms.generated.h"
 

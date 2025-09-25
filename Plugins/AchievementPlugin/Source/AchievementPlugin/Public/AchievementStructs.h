@@ -40,11 +40,11 @@ struct ACHIEVEMENTPLUGIN_API FAchievementProgress
 public:
 	FAchievementProgress() = default;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"), SaveGame)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Achievement Progress", meta = (ClampMin = "0"), SaveGame)
 	float progress = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Achievement Progress", SaveGame)
 	bool bIsAchievementUnlocked = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Achievement Progress", SaveGame)
 	FString unlockedTime = "Never";
 };
 

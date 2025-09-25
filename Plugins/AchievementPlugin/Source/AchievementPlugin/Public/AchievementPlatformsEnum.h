@@ -1,18 +1,21 @@
 // ReSharper disable CppInconsistentNaming
 #pragma once
+#include "CoreMinimal.h"
+#include "UObject/ObjectMacros.h"
+#include "AchievementPlatformsEnum.generated.h"
 
 UENUM()
 enum EAchievementPlatforms : uint8
 {
-	LOCALONLY = 0,
-	STEAM,
-	EOS
+	LOCALONLY UMETA(DisplayName = "Local Only"),
+	STEAM UMETA(DisplayName = "Steam"),
+	EOS UMETA(DisplayName = "EOS")
 };
 
 UENUM()
 enum EAchievementUploadTypes : uint8
 {
 	// cannot use capitals because of the typedef conflict
-	Float = 0,
-	Int32
+	Float UMETA(DisplayName = "Float"),
+	Int32 UMETA(DisplayName = "Int32")
 };

@@ -5,6 +5,10 @@
 
 #include "AchievementLogCategory.h"
 #include "AchievementPlugin.h"
+	
+#include "HAL/PlatformFilemanager.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 
 // platform includes
 #include "Platforms/SteamPlatformAchievements.h"
@@ -18,12 +22,12 @@ bool UAchievementPlatformsClass::InitializePlatform(const EAchievementPlatforms 
 	selectedPlatform = platform;
 	switch (platform)
 	{
-		case STEAM:
+		case EAchievementPlatforms::STEAM:
 		{
 			achievementPlatformInitialized = SteamAchievementsClass::Initialize();
 			break;
 		}
-		case EOS:
+		case EAchievementPlatforms::EOS:
 		{
 			achievementPlatformInitialized = EpicGamesAchievementsClass::InitializeEOS();
 			break;
@@ -38,12 +42,12 @@ void UAchievementPlatformsClass::ShutdownPlatform()
 {
 	switch (selectedPlatform)
 	{
-		case STEAM:
+		case EAchievementPlatforms::STEAM:
 		{
 			SteamAchievementsClass::Shutdown();
 			break;
 		}
-		case EOS:
+		case EAchievementPlatforms::EOS:
 		{
 			EpicGamesAchievementsClass::Shutdown();
 			break;
@@ -57,11 +61,11 @@ bool UAchievementPlatformsClass::SetPlatformAchievementProgress(const FAchieveme
 {
 	switch (selectedPlatform)
 	{
-		case STEAM:
+		case EAchievementPlatforms::STEAM:
 		{
 			return SteamAchievementsClass::SetSteamAchievementProgress(platformData, progress, unlocked);
 		}
-		case EOS:
+		case EAchievementPlatforms::EOS:
 		{
 			return EpicGamesAchievementsClass::SetEpicAchievementProgress(platformData, progress, unlocked);
 		}
@@ -75,11 +79,11 @@ bool UAchievementPlatformsClass::PlatformDeleteAchievementProgress(const FAchiev
 {
 	switch (selectedPlatform)
 	{
-		case STEAM:
+		case EAchievementPlatforms::STEAM:
 		{
 			return SteamAchievementsClass::DeleteSteamAchievementProgress(platformData);
 		}
-		case EOS:
+		case EAchievementPlatforms::EOS:
 		{
 			return EpicGamesAchievementsClass::DeleteEpicAchievementProgress(platformData);
 		}
@@ -92,11 +96,11 @@ bool UAchievementPlatformsClass::PlatformDeleteAllAchievementProgress()
 {
 	switch (selectedPlatform)
 	{
-		case STEAM:
+		case EAchievementPlatforms::STEAM:
 		{
 			return SteamAchievementsClass::DeleteAllSteamAchievementProgress();
 		}
-		case EOS:
+		case EAchievementPlatforms::EOS:
 		{
 			return EpicGamesAchievementsClass::DeleteAllEpicAchievementProgress();
 		}
@@ -109,11 +113,11 @@ TMap<FString, FAchievementData> UAchievementPlatformsClass::GetPlatformAchieveme
 {
 	switch (selectedPlatform)
 	{
-		case STEAM:
+		case EAchievementPlatforms::STEAM:
 		{
 			return SteamAchievementsClass::GetSteamAchievementsAsAchievementDataMap();
 		}
-		case EOS:
+		case EAchievementPlatforms::EOS:
 		{
 			return EpicGamesAchievementsClass::GetEpicAchievementsAsAchievementDataMap();
 		}
@@ -127,12 +131,12 @@ void UAchievementPlatformsClass::Tick(float DeltaTime)
 	if (!achievementPlatformInitialized) return;
 	switch (selectedPlatform)
 	{
-		case STEAM:
+		case EAchievementPlatforms::STEAM:
 		{
 			SteamAchievementsClass::Tick();
 			break;
 		}
-		case EOS:
+		case EAchievementPlatforms::EOS:
 		{
 			EpicGamesAchievementsClass::Tick();
 		}
