@@ -29,7 +29,7 @@ bool UAchievementPlatformsClass::InitializePlatform(const EAchievementPlatforms 
 		}
 		case EAchievementPlatforms::EOS:
 		{
-			achievementPlatformInitialized = EpicGamesAchievementsClass::InitializeEOS();
+			achievementPlatformInitialized = EpicGamesAchievementsClass::InitializeEos();
 			break;
 		}
 
@@ -85,7 +85,8 @@ bool UAchievementPlatformsClass::PlatformDeleteAchievementProgress(const FAchiev
 		}
 		case EAchievementPlatforms::EOS:
 		{
-			return EpicGamesAchievementsClass::DeleteEpicAchievementProgress(platformData);
+				// EOS doesn't allow deletion
+			return false;
 		}
 		default:break;
 	}
@@ -102,7 +103,8 @@ bool UAchievementPlatformsClass::PlatformDeleteAllAchievementProgress()
 		}
 		case EAchievementPlatforms::EOS:
 		{
-			return EpicGamesAchievementsClass::DeleteAllEpicAchievementProgress();
+				// EOS doesn't allow deletion
+			return false;
 		}
 		default:break;
 	}

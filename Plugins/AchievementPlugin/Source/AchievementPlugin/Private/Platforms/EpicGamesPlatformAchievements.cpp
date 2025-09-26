@@ -16,20 +16,22 @@ EOS_HPlatform EpicGamesAchievementsClass::m_platformHandle = nullptr;
 EOS_ProductUserId EpicGamesAchievementsClass::m_productUserId = nullptr;
 TUniquePtr<EpicGamesAchievementsClass> EpicGamesAchievementsClass::m_instance = nullptr;
 bool EpicGamesAchievementsClass::m_eosInitialized = false;
+FEventRef EpicGamesAchievementsClass::m_waitEvent;
+float EpicGamesAchievementsClass::m_waitTime = 5.f;
 
 void EpicGamesAchievementsClass::VerifyAchievements()
 {
 	if (!m_productUserId) return;
 
 	// Query player achievements to see what's actually unlocked
-	EOS_Achievements_QueryPlayerAchievementsOptions QueryOptions = {};
-	QueryOptions.ApiVersion = EOS_ACHIEVEMENTS_QUERYPLAYERACHIEVEMENTS_API_LATEST;
-	QueryOptions.LocalUserId = m_productUserId;
-	QueryOptions.TargetUserId = m_productUserId;
+	EOS_Achievements_QueryPlayerAchievementsOptions queryOptions = {};
+	queryOptions.ApiVersion = EOS_ACHIEVEMENTS_QUERYPLAYERACHIEVEMENTS_API_LATEST;
+	queryOptions.LocalUserId = m_productUserId;
+	queryOptions.TargetUserId = m_productUserId;
 
 	EOS_Achievements_QueryPlayerAchievements(
 		EOS_Platform_GetAchievementsInterface(m_platformHandle),
-		&QueryOptions,
+		&queryOptions,
 		m_instance.Get(),
 		[](const EOS_Achievements_OnQueryPlayerAchievementsCompleteCallbackInfo* Data)
 		{
@@ -241,7 +243,7 @@ void EpicGamesAchievementsClass::OnAchievementUnlockComplete(
 }
 
 
-bool EpicGamesAchievementsClass::InitializeEOS()
+bool EpicGamesAchievementsClass::InitializeEos()
 {
 	m_instance = MakeUnique<EpicGamesAchievementsClass>();
 	GetPlatformInitialized() = false;
@@ -350,10 +352,11 @@ void EpicGamesAchievementsClass::Tick()
 		EOS_Platform_Tick(m_platformHandle);
 	}
 }
-static void EOS_CALL OnQueryDefinitionsCompleteDummy(const EOS_Achievements_OnQueryDefinitionsCompleteCallbackInfo* Data)
+void EOS_CALL EpicGamesAchievementsClass::OnQueryDefinitionsComplete(const EOS_Achievements_OnQueryDefinitionsCompleteCallbackInfo* Data)
 {
 	UE_LOG(AchievementPlatformLog, Log, TEXT("Query definitions callback triggered with result: %hs"),
 		   EOS_EResult_ToString(Data->ResultCode));
+	m_waitEvent->Trigger();
 }
 
 TMap<FString, FAchievementData> EpicGamesAchievementsClass::GetEpicAchievementsAsAchievementDataMap()
@@ -375,29 +378,27 @@ TMap<FString, FAchievementData> EpicGamesAchievementsClass::GetEpicAchievementsA
 		EOS_Platform_GetAchievementsInterface(m_platformHandle),
 		&queryDefOptions,
 		nullptr,
-		OnQueryDefinitionsCompleteDummy
+		OnQueryDefinitionsComplete
 	);
 
-	// we need to make sure that the query has finished before succeeding
-	// this is bad, don't do this under regular circumstances!
-	// I do it here because I know that this is something that only happens like once, and only in editor, nowhere else!
-	// do as I say, not as I do
+	// need to tick in order to receive callback
 	Tick();
-	FPlatformProcess::Sleep(3.0f);
+	m_waitEvent->Wait(m_waitTime);
+	m_waitEvent->Reset();
 
 	// Get achievement count
-	EOS_Achievements_GetAchievementDefinitionCountOptions CountOptions = {};
-	CountOptions.ApiVersion = EOS_ACHIEVEMENTS_GETACHIEVEMENTDEFINITIONCOUNT_API_LATEST;
+	EOS_Achievements_GetAchievementDefinitionCountOptions countOptions = {};
+	countOptions.ApiVersion = EOS_ACHIEVEMENTS_GETACHIEVEMENTDEFINITIONCOUNT_API_LATEST;
 
-	const uint32_t AchievementCount = EOS_Achievements_GetAchievementDefinitionCount(
+	const uint32_t achievementCount = EOS_Achievements_GetAchievementDefinitionCount(
 		EOS_Platform_GetAchievementsInterface(m_platformHandle),
-		&CountOptions
+		&countOptions
 	);
 
-	UE_LOG(AchievementPlatformLog, Log, TEXT("Found %d EOS achievements"), AchievementCount);
+	UE_LOG(AchievementPlatformLog, Log, TEXT("Found %d EOS achievements"), achievementCount);
 
 	// Iterate through each achievement
-	for (uint32_t i = 0; i < AchievementCount; ++i)
+	for (uint32_t i = 0; i < achievementCount; ++i)
 	{
 		EOS_Achievements_CopyAchievementDefinitionV2ByIndexOptions CopyOptions = {};
 		CopyOptions.ApiVersion = EOS_ACHIEVEMENTS_COPYACHIEVEMENTDEFINITIONV2BYINDEX_API_LATEST;
@@ -519,18 +520,6 @@ bool EpicGamesAchievementsClass::SetEpicAchievementProgress(const FAchievementPl
 	}
 
 	UE_LOG(AchievementPlatformLog, Error, TEXT(" Epic API wasn't initialized properly!"));
-	return false;
-}
-
-bool EpicGamesAchievementsClass::DeleteEpicAchievementProgress(const FAchievementPlatformData& achievementData)
-{
-	// not really possible using EOS, only stats
-	return false;
-}
-
-bool EpicGamesAchievementsClass::DeleteAllEpicAchievementProgress()
-{
-	// not really possible using EOS, only stats
 	return false;
 }
 
