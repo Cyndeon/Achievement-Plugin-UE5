@@ -59,6 +59,7 @@ void UAchievementPopup::Tick(float deltaTime)
 			// if it didn't work, put it back and try again
 			if (!widget)
 			{
+				UE_LOG(AchievementUILog, Warning, TEXT("Creating Widget didn't work, trying again"));
 				m_queuedPopups.Insert(data, 0);
 				return;
 			}
