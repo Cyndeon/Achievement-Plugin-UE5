@@ -77,16 +77,6 @@ void UAchievementPopup::Tick(float deltaTime)
 			PositionWidget(widgetInstanceIndex);
 		}
 	}
-	if (m_widgetInstances.Num() > 0)
-	{
-		// backup check to remove invalid widgets
-		while (!IsValid(m_widgetInstances[0]))
-		{
-			m_widgetInstances.RemoveAt(0);
-		}
-
-		RepositionAllWidgets();
-	}
 }
 
 UUserWidget* UAchievementPopup::CreateWidgetInstance()
