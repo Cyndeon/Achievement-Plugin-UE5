@@ -52,9 +52,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Achievement Platform Initialized", Keywords = "Achievement Platform Initialized"), Category = "AchievementPlugin")
 	static void AchievementPlatformInitialized(EAchievementPlatforms platform, bool init = true);
 
-
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Achievement Widget TESTING", Keywords = "Achievement Widget TESTING"), Category = "AchievementPlugin")
-	static void TESTCALLTHETHING();
+	// this function is required for the Widget to function properly
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Remove Achievement Widget", Keywords = "Achievement Widget Remove"), Category = "AchievementPlugin")
+	static void RemoveAchievementWidget();
 };
 
 

@@ -2,30 +2,68 @@
 
 #include "UAchievementPopup.generated.h"
 
-UCLASS()
-class UAchievementPopup : public UObject
+USTRUCT()
+struct FAchievementNameAndIcon
 {
 	GENERATED_BODY()
 public:
-	static UAchievementPopup* Get()
+	FAchievementNameAndIcon() = default;
+	FAchievementNameAndIcon(const FText& newName, const TSoftObjectPtr<UTexture2D>& newIcon) : name(newName), icon(newIcon)
+	{}
+
+	FText name = FText::FromString("");
+	TSoftObjectPtr<UTexture2D> icon = nullptr;
+};
+class UWorld;
+UCLASS()
+class UAchievementPopup : public UWorldSubsystem, public FTickableGameObject
+{
+	GENERATED_BODY()
+public:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+	static UAchievementPopup* Get();
+#if WITH_EDITOR
+	// this is to update the cached values if it is edited in the dev settings
+	void OverrideCachedMaxToShow(const int32 newVal)
 	{
-		return GetMutableDefault<UAchievementPopup>();
+		m_maxPopupsCachedValue = newVal;
 	}
-	void SetWorld(const UWorld* world)
+	void OverrideCachedDistance(const float newVal)
 	{
-		m_cachedWorld = const_cast<UWorld*>(world);
+		m_distanceBetweenPopupsCachedValue = newVal;
+	}
+#endif
+
+	void QueuePopup(const FText& name, const TSoftObjectPtr<UTexture2D>& icon);
+
+	virtual void Tick(float deltaTime) override;
+	// we need this in order to retrieve achievements stats in the editor
+	virtual bool IsTickableInEditor() const override
+	{
+		return false;
+	}
+	virtual TStatId GetStatId() const override
+	{
+		RETURN_QUICK_DECLARE_CYCLE_STAT(UAchievementPopup, STATGROUP_Tickables);
 	}
 
-	bool CreatePopup(const FText& achievementId, const TSoftObjectPtr<UTexture2D> icon);
-
+	bool DeleteFirstWidgetInstance();
 private:
-	bool CreateWidgetInstance();
-	bool DeleteWidgetInstance();
+	UUserWidget* CreateWidgetInstance();
+	void PositionWidget(int32 index);
+	void RepositionAllWidgets();
 
 	UPROPERTY()
-	UUserWidget* m_widgetInstance = nullptr;
+	TArray<TObjectPtr<UUserWidget>> m_widgetInstances;
 
-	// we need this for creating the UI
 	UPROPERTY()
-	UWorld* m_cachedWorld = nullptr;
+	TArray<FAchievementNameAndIcon> m_queuedPopups;
+
+	UPROPERTY()
+	int m_maxPopupsCachedValue = 0;
+	UPROPERTY()
+	float m_distanceBetweenPopupsCachedValue = 0;
+
+	static UWorld* m_cachedWorld;
 };

@@ -157,3 +157,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms", meta = (DisplayName = "Encryption Key (Optional)"))
 	FString EncryptionKey;
 };
+
+USTRUCT(BlueprintType)
+struct FAchievementWidgetSettings
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Achievement User Widget",
+			  ToolTip = "The achievement widget to use for popups. If using a custom one, make sure to check the user guide to make sure it will work!"))
+	TSubclassOf<UUserWidget> achievementWidget = nullptr;
+
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Max popups to show at once"))
+	int maxToShow = 3;
+
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Distance Between Popups",
+			  ToolTip = "The distance in the y axis between multiple popups"))
+	float distanceBetweenPopups = 120.f;
+};

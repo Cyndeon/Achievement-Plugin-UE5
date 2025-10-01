@@ -129,7 +129,7 @@ void UAchievementPluginBPLibrary::AchievementPlatformInitialized(const EAchievem
 	UE_LOG(AchievementPlatformLog, Error, TEXT(" AchievementPlatformClass cannot be found!"));
 }
 
-void UAchievementPluginBPLibrary::TESTCALLTHETHING()
+void UAchievementPluginBPLibrary::RemoveAchievementWidget()
 {
-
+	GetManager()->DeleteAchievementPopup();
 }

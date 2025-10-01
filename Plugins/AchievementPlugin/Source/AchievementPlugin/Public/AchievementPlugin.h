@@ -9,7 +9,6 @@
 #include "AchievementStructs.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "Engine/World.h"
-#include "Blueprint/UserWidget.h"
 
 #include "AchievementPlugin.generated.h"
 
@@ -87,9 +86,8 @@ public:
 			  ToolTip = "If enabled, will delete any achievement progress for achievements that no longer exist"))
 	bool bCleanupAchievements = true;
 
-	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Achievement User Widget",
-			  ToolTip = "The achievement widget to use for popups. Make sure to check the user guide to make sure it will work!"))
-	TSubclassOf<UUserWidget> achievementWidget = nullptr;
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement Widget Settings", meta = (DisplayName = "Achievement Widget Settings"))
+	FAchievementWidgetSettings achievementWidgetSettings;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
@@ -173,6 +171,8 @@ public:
 
 	// Sets the progress for the achievement, including updating platforms
 	bool IncreaseAchievementProgress(const FString& achievementId, float increase);
+
+	void DeleteAchievementPopup() const;
 
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
 	// the 'Key' is the LinkID that the achievementData has

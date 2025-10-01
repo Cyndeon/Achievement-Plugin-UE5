@@ -180,6 +180,16 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		AttemptSave();
 	}
 
+	// if max popups to show got updated, also update the cached value
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(FAchievementWidgetSettings, maxToShow))
+	{
+		UAchievementPopup::Get()->OverrideCachedMaxToShow(achievementWidgetSettings.maxToShow);
+	}
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(FAchievementWidgetSettings, distanceBetweenPopups))
+	{
+		UAchievementPopup::Get()->OverrideCachedDistance(achievementWidgetSettings.distanceBetweenPopups);
+	}
+
 	// if a new achievement got added/removed
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, achievementsData))
 	{
@@ -212,6 +222,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		}
 	}
 
+	// platform specific data
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, m_steamAppID))
 	{
 		UAchievementPlatformsClass::CreateSteamAppIdFile(m_steamAppID);
@@ -393,7 +404,7 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 			achievementProgress->bIsAchievementUnlocked = true;
 			achievementProgress->unlockedTime = FDateTime::Now().ToString();
 
-			UAchievementPopup::Get()->CreatePopup(achievement->displayName, achievement->unlockedTexture);
+			UAchievementPopup::Get()->QueuePopup(achievement->displayName, achievement->unlockedTexture);
 		}
 		// otherwise we just increase progress
 		else
@@ -407,6 +418,11 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 	}
 	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the '%s'"), *achievementId);
 	return false;
+}
+
+void UAchievementManagerSubSystem::DeleteAchievementPopup() const
+{
+	UAchievementPopup::Get()->DeleteFirstWidgetInstance();
 }
 
 void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world)
@@ -425,8 +441,7 @@ void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world)
 				}
 			}
 		}
-
-		UAchievementPopup::Get()->SetWorld(world);
+		// UAchievementPopup::Get()->SetWorld(world);
 	}
 }
 
