@@ -51,6 +51,10 @@ public:
 	// this function should only be called when the user manually initializes the platform
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Achievement Platform Initialized", Keywords = "Achievement Platform Initialized"), Category = "AchievementPlugin")
 	static void AchievementPlatformInitialized(EAchievementPlatforms platform, bool init = true);
+
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Achievement Widget TESTING", Keywords = "Achievement Widget TESTING"), Category = "AchievementPlugin")
+	static void TESTCALLTHETHING();
 };
 
 

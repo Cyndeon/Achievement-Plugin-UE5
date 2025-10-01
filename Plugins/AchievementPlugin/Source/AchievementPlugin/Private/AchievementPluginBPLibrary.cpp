@@ -5,6 +5,7 @@
 #include "AchievementLogCategory.h"
 #include "AchievementPlatforms.h"
 #include "AchievementPlugin.h"
+#include "UAchievementPopup.h"
 #include "USaveSystem.h"
 
 UAchievementPluginBPLibrary::UAchievementPluginBPLibrary(const FObjectInitializer& objectInitializer)
@@ -126,4 +127,9 @@ void UAchievementPluginBPLibrary::AchievementPlatformInitialized(const EAchievem
 	}
 
 	UE_LOG(AchievementPlatformLog, Error, TEXT(" AchievementPlatformClass cannot be found!"));
+}
+
+void UAchievementPluginBPLibrary::TESTCALLTHETHING()
+{
+
 }

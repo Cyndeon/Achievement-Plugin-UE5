@@ -8,7 +8,6 @@ public class AchievementPlugin : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         IWYUSupport = IWYUSupport.Full;
-        bUseUnity = false;
 
         PublicIncludePaths.AddRange(
             new string[] {
@@ -30,7 +29,8 @@ public class AchievementPlugin : ModuleRules
                 "Engine",
                 "EngineSettings",
                 "DeveloperSettings",
-                "EOSSDK"
+                "EOSSDK",
+                "UMG"
             }
         );
 

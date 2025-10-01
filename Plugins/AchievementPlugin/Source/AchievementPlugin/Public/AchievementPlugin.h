@@ -8,13 +8,13 @@
 #include "Engine/DeveloperSettings.h"
 #include "AchievementStructs.h"
 #include "Subsystems/EngineSubsystem.h"
-#include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Blueprint/UserWidget.h"
 
 #include "AchievementPlugin.generated.h"
 
 
-class FAchievementPluginModule : public IModuleInterface
+class ACHIEVEMENTPLUGIN_API FAchievementPluginModule : public IModuleInterface
 {
 public:
 	static FAchievementPluginModule* Get()
@@ -83,10 +83,13 @@ public:
 			  ToolTip = "Key: Name used for modifying achievementsData in Blueprint Nodes, Value: Achievement settings"))
 	TMap<FString, FAchievementData> achievementsData;
 
-public:
 	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement Settings", meta = (DisplayName = "Cleanup Achievements on Load",
 			  ToolTip = "If enabled, will delete any achievement progress for achievements that no longer exist"))
 	bool bCleanupAchievements = true;
+
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Achievement User Widget",
+			  ToolTip = "The achievement widget to use for popups. Make sure to check the user guide to make sure it will work!"))
+	TSubclassOf<UUserWidget> achievementWidget = nullptr;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
@@ -109,10 +112,6 @@ public:
 			  Tooltip = "Start Download (might take a little bit depending on the amount of achievements adn selected platform)!",
 			  EditCondition = "bForceDownloadPlatformAchievements", EditConditionHides))
 	bool bForceDownloadPlatformAchievementsSafetyCheck = false;
-
-	// TEMP DELETE
-	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "PROGESS TEST TEMP RANDOM VALUES"))
-	bool progressStuff = false;
 #endif
 
 #if WITH_EDITOR

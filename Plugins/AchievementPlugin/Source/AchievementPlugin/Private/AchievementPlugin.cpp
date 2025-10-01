@@ -9,6 +9,7 @@
 #include "AchievementLogCategory.h"
 #include "USaveSystem.h"
 #include "AchievementPlatforms.h"
+#include "UAchievementPopup.h"
 
 
 #define LOCTEXT_NAMESPACE "FAchievementPluginModule"
@@ -166,22 +167,6 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 
 		bForceDownloadPlatformAchievements = false;
 		bForceDownloadPlatformAchievementsSafetyCheck = false;
-	}
-
-	// TEMP BUTTON!!!!!!!!!! DELETE THIS ONCE DONE TESTING!
-	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, progressStuff))
-	{
-		if (progressStuff) // only when checked
-		{
-			auto* manager = UAchievementManagerSubSystem::Get();
-			for (auto& progress : manager->achievementsProgress)
-			{
-				progress.Value.progress = FMath::RandRange(1, 100);
-			}
-
-			// Reset so it can be clicked again
-			progressStuff = false;
-		}
 	}
 
 #pragma endregion
@@ -407,7 +392,10 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 			achievementProgress->progress = goal;
 			achievementProgress->bIsAchievementUnlocked = true;
 			achievementProgress->unlockedTime = FDateTime::Now().ToString();
+
+			UAchievementPopup::Get()->CreatePopup(achievement->displayName, achievement->unlockedTexture);
 		}
+		// otherwise we just increase progress
 		else
 		{
 			achievementProgress->progress += increase;
@@ -437,6 +425,8 @@ void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world)
 				}
 			}
 		}
+
+		UAchievementPopup::Get()->SetWorld(world);
 	}
 }
 
