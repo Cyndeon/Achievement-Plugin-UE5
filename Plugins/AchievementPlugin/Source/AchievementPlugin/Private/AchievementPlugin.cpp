@@ -9,7 +9,7 @@
 #include "AchievementLogCategory.h"
 #include "USaveSystem.h"
 #include "AchievementPlatforms.h"
-#include "UAchievementPopup.h"
+#include "UAchievementPopupManager.h"
 
 
 #define LOCTEXT_NAMESPACE "FAchievementPluginModule"
@@ -179,17 +179,6 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 
 		AttemptSave();
 	}
-
-	// if max popups to show got updated, also update the cached value
-	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(FAchievementWidgetSettings, maxToShow))
-	{
-		UAchievementPopup::Get()->OverrideCachedMaxToShow(achievementWidgetSettings.maxToShow);
-	}
-	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(FAchievementWidgetSettings, distanceBetweenPopups))
-	{
-		UAchievementPopup::Get()->OverrideCachedDistance(achievementWidgetSettings.distanceBetweenPopups);
-	}
-
 	// if a new achievement got added/removed
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, achievementsData))
 	{
@@ -384,7 +373,14 @@ void UAchievementManagerSubSystem::CleanupAchievements()
 
 bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& achievementId, const float increase)
 {
-	const auto linkId = UAchievementPluginSettings::Get()->GetLinkIDByAchievementID(achievementId);
+	const auto& settings = UAchievementPluginSettings::Get();
+	if (!settings)
+	{
+		UE_LOG(AchievementLog, Error, TEXT("Settings::Get() returned nullptr!"));
+		return false;
+	}
+
+	const auto linkId = settings->GetLinkIDByAchievementID(achievementId);
 	if (auto* achievementProgress = achievementsProgress.Find(linkId))
 	{
 		// if it was already unlocked, return
@@ -403,8 +399,6 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 			achievementProgress->progress = goal;
 			achievementProgress->bIsAchievementUnlocked = true;
 			achievementProgress->unlockedTime = FDateTime::Now().ToString();
-
-			UAchievementPopup::Get()->QueuePopup(achievement->displayName, achievement->unlockedTexture);
 		}
 		// otherwise we just increase progress
 		else
@@ -412,6 +406,13 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 			achievementProgress->progress += increase;
 		}
 		UAchievementPlatformsClass::SetPlatformAchievementProgress(achievement->platformData, achievementProgress->progress, achievementProgress->bIsAchievementUnlocked);
+
+		if (settings->achievementWidgetSettings.usePopups)
+		{
+			const float progress = achievementProgress->bIsAchievementUnlocked ? 0.f : (achievementProgress->progress / goal);
+			const TSoftObjectPtr<UTexture2D>& image = achievementProgress->bIsAchievementUnlocked ? achievement->unlockedTexture : achievement->lockedTexture;
+			UAchievementPopupManager::Get()->QueuePopup(achievement->displayName, image, progress);
+		}
 
 		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%f'"), *achievementId, achievementProgress->progress);
 		return true;
@@ -422,7 +423,7 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 
 void UAchievementManagerSubSystem::DeleteAchievementPopup() const
 {
-	UAchievementPopup::Get()->DeleteFirstWidgetInstance();
+	UAchievementPopupManager::Get()->DeleteFirstWidgetInstance();
 }
 
 void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world)
@@ -441,7 +442,6 @@ void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world)
 				}
 			}
 		}
-		// UAchievementPopup::Get()->SetWorld(world);
 	}
 }
 

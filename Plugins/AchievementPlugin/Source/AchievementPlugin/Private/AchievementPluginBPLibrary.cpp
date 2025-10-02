@@ -5,7 +5,7 @@
 #include "AchievementLogCategory.h"
 #include "AchievementPlatforms.h"
 #include "AchievementPlugin.h"
-#include "UAchievementPopup.h"
+#include "UAchievementPopupManager.h"
 #include "USaveSystem.h"
 
 UAchievementPluginBPLibrary::UAchievementPluginBPLibrary(const FObjectInitializer& objectInitializer)

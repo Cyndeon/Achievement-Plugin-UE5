@@ -1,6 +1,6 @@
 #pragma once
 
-#include "UAchievementPopup.generated.h"
+#include "UAchievementPopupManager.generated.h"
 
 USTRUCT()
 struct FAchievementNameAndIcon
@@ -8,21 +8,24 @@ struct FAchievementNameAndIcon
 	GENERATED_BODY()
 public:
 	FAchievementNameAndIcon() = default;
-	FAchievementNameAndIcon(const FText& newName, const TSoftObjectPtr<UTexture2D>& newIcon) : name(newName), icon(newIcon)
+	FAchievementNameAndIcon(const FText& newName, const TSoftObjectPtr<UTexture2D>& newIcon, 
+							const float newProgress = 0.f) : name(newName), image(newIcon), progress(newProgress)
 	{}
 
 	FText name = FText::FromString("");
-	TSoftObjectPtr<UTexture2D> icon = nullptr;
+	TSoftObjectPtr<UTexture2D> image = nullptr;
+	float progress = 0.f;
 };
+
 class UWorld;
 UCLASS()
-class UAchievementPopup : public UWorldSubsystem, public FTickableGameObject
+class UAchievementPopupManager : public UWorldSubsystem, public FTickableGameObject
 {
 	GENERATED_BODY()
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
-	static UAchievementPopup* Get();
+	static UAchievementPopupManager* Get();
 #if WITH_EDITOR
 	// this is to update the cached values if it is edited in the dev settings
 	void OverrideCachedMaxToShow(const int32 newVal)
@@ -35,7 +38,7 @@ public:
 	}
 #endif
 
-	void QueuePopup(const FText& name, const TSoftObjectPtr<UTexture2D>& icon);
+	void QueuePopup(const FText& name, const TSoftObjectPtr<UTexture2D>& icon, const float progress);
 
 	virtual void Tick(float deltaTime) override;
 	// we need this in order to retrieve achievements stats in the editor
@@ -59,6 +62,11 @@ private:
 
 	UPROPERTY()
 	TArray<FAchievementNameAndIcon> m_queuedPopups;
+
+	// used for achievements that are currently "on cooldown". Progress achievements only show up once every x seconds
+	// this map keeps track of the ones that have been shown before and currently cannot be shown again
+	UPROPERTY()
+	TMap<FName, float> m_progressCooldowns;
 
 	UPROPERTY()
 	int m_maxPopupsCachedValue = 0;
