@@ -417,7 +417,7 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%f'"), *achievementId, achievementProgress->progress);
 		return true;
 	}
-	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the '%s'"), *achievementId);
+	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for '%s'"), *achievementId);
 	return false;
 }
 

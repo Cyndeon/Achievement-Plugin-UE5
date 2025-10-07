@@ -1,7 +1,10 @@
 #pragma once
 
 #include "AchievementStructs.h"
+#pragma warning(push)
+#pragma warning(disable: 4996)  // disable "unsafe function" warnings
 #include "../ThirdParty/steamworks_sdk_162/sdk/public/steam/steam_api.h"
+#pragma warning(pop)
 
 class SteamCallbacksClass;
 class ACHIEVEMENTPLUGIN_API SteamAchievementsClass

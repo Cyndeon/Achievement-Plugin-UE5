@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/Texture2D.h"
+#include "Blueprint/UserWidget.h"
 #include "AchievementPlatformsEnum.h"
 
 #include "AchievementStructs.generated.h" 

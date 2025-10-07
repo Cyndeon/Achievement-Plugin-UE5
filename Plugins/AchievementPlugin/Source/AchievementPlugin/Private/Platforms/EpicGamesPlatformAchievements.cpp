@@ -467,7 +467,6 @@ bool EpicGamesAchievementsClass::SetEpicAchievementProgress(const FAchievementPl
 			unlockOptions.AchievementIds = &achievementChar;
 			unlockOptions.AchievementsCount = 1;
 
-			// For simplicity, using synchronous approach - you might want async callbacks
 			EOS_Achievements_UnlockAchievements(
 				EOS_Platform_GetAchievementsInterface(m_platformHandle),
 				&unlockOptions,
@@ -481,8 +480,7 @@ bool EpicGamesAchievementsClass::SetEpicAchievementProgress(const FAchievementPl
 		}
 		else
 		{
-			// Set stat progress (which may trigger achievement unlock if threshold is reached)
-			// Convert the type to what EOS is expecting
+			// Set stat progress
 			EOS_Stats_IngestStatOptions ingestOptions = {};
 			ingestOptions.ApiVersion = EOS_STATS_INGESTSTAT_API_LATEST;
 			ingestOptions.LocalUserId = m_productUserId;

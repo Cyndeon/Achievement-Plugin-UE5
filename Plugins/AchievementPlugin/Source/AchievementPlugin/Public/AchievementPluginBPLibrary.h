@@ -12,16 +12,6 @@ class ACHIEVEMENTPLUGIN_API UAchievementPluginBPLibrary : public UBlueprintFunct
 {
 	GENERATED_UCLASS_BODY()
 public:
-	//UFUNCTION(BlueprintCallable)
-	//static TArray<FString> GetAchievementNames();
-
-	//UFUNCTION(BlueprintCallable, BlueprintInternalUseOnly, Category = "Parameter Collection",
-	//		  meta = (DisplayName = "Set Value as Bool",
-	//		  AutoCreateRefTerm = "achievementName",
-	//		  GetOptions = "UAchievementPluginBPLibrary.GetAchievementNames"))
-	//bool IncreaseAchievementProgress(const FString& achievementName, int32 increase);
-
-
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Change Achievement Progress", Keywords = "Change Achievement Progress"), Category = "AchievementPlugin")
 	static bool IncreaseAchievementProgress(
 		const FString& localAchievementId,

@@ -1,5 +1,10 @@
 #pragma once
 
+#include "Subsystems/WorldSubsystem.h"
+#include "Tickable.h"
+#include "Blueprint/UserWidget.h"
+#include "Engine/Texture2D.h"
+
 #include "UAchievementPopupManager.generated.h"
 
 USTRUCT()

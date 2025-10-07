@@ -107,7 +107,7 @@ public:
 			  Tooltip="This will override all your achievements with those from the selected platform. Please note that some variables will still have to be set manually!"))
 	bool bForceDownloadPlatformAchievements = false;
 	UPROPERTY(EditAnywhere, Category = "Achievements Platform Buttons", Transient, meta = (DisplayName = "This cannot be undone unless you make a backup of your current DefaultGame.ini!",
-			  Tooltip = "Start Download (might take a little bit depending on the amount of achievements adn selected platform)!",
+			  Tooltip = "Start Download (might take a little bit depending on the amount of achievements and selected platform)!",
 			  EditCondition = "bForceDownloadPlatformAchievements", EditConditionHides))
 	bool bForceDownloadPlatformAchievementsSafetyCheck = false;
 #endif

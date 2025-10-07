@@ -1,6 +1,5 @@
 #include "UAchievementPopupManager.h"
 
-#include "Blueprint/UserWidget.h"
 #include "AchievementLogCategory.h"
 #include "AchievementPlugin.h"
 #include "Components/TextBlock.h"
@@ -60,21 +59,21 @@ void UAchievementPopupManager::QueuePopup(const FText& name, const TSoftObjectPt
 
 void UAchievementPopupManager::Tick(const float deltaTime)
 {
-	// progress cooldowns
-	if (m_progressCooldowns.Num() > 0)
-	{
-		const auto& cooldownTime = UAchievementPluginSettings::Get()->achievementWidgetSettings.delayBetweenSameProgressAchievementPopup;
-		// iterate through all elements, increase cooldown timer and remove if timer is more than or equal to the cooldown time
-		for (auto it = m_progressCooldowns.CreateIterator(); it; ++it)
+		// progress cooldowns
+		if (m_progressCooldowns.Num() > 0)
 		{
-			it.Value() += deltaTime;
-
-			if (it.Value() >= cooldownTime)
+			const auto& cooldownTime = UAchievementPluginSettings::Get()->achievementWidgetSettings.delayBetweenSameProgressAchievementPopup;
+			// iterate through all elements, increase cooldown timer and remove if timer is more than or equal to the cooldown time
+			for (auto it = m_progressCooldowns.CreateIterator(); it; ++it)
 			{
-				it.RemoveCurrent();
+				it.Value() += deltaTime;
+
+				if (it.Value() >= cooldownTime)
+				{
+					it.RemoveCurrent();
+				}
 			}
 		}
-	}
 
 	if (m_queuedPopups.Num() > 0)
 	{
@@ -87,10 +86,9 @@ void UAchievementPopupManager::Tick(const float deltaTime)
 			// create the new Popup (widget)
 			auto* widget = CreateWidgetInstance();
 
-			// if it didn't work, put it back and try again
 			if (!widget)
 			{
-				UE_LOG(AchievementUILog, Error, TEXT("Something went wrong creating a Widget, please restart the engine"));
+				UE_LOG(AchievementUILog, Error, TEXT("Something went wrong creating a Widget, please restart the engine if this occurs more!"));
 				return;
 			}
 

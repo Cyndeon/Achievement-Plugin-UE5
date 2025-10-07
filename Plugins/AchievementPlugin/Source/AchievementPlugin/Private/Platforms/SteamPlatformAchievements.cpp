@@ -155,7 +155,7 @@ bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatf
 		// if the achievement should be unlocked
 		if (unlocked)
 		{
-			// Unlock any achievement (works for both one-time and incremental)
+			// Unlock the achievement
 			bSuccess = SteamUserStats()->SetAchievement(TCHAR_TO_ANSI(*achievementData.steamAchievementID));
 			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to unlock: %s"), *achievementData.steamAchievementID);
 		}
