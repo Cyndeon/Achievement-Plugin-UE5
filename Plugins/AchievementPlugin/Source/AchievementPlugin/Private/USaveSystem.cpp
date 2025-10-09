@@ -42,12 +42,12 @@ bool UAchievementSaveManager::SaveProgress(const TMap<int32, FAchievementProgres
 
 	if (bSaveSuccess)
 	{
-		UE_LOG(AchievementLog, Log, TEXT("Synchronously saved %d achievementsData to '%s', index '%d'"),
+		UE_LOG(AchievementLog, Log, TEXT("Synchronously saved '%d' achievementsData to '%s', index '%d'"),
 			   achievements.Num(), *m_saveSlotSettings.slotName, m_saveSlotSettings.slotIndex);
 	}
 	else
 	{
-		UE_LOG(AchievementLog, Error, TEXT("Failed to save achievementsData to slot: %s"), *m_saveSlotSettings.slotName);
+		UE_LOG(AchievementLog, Error, TEXT("Failed to save achievementsData to slot: '%s'"), *m_saveSlotSettings.slotName);
 	}
 
 	return bSaveSuccess;
@@ -63,7 +63,7 @@ TMap<int32, FAchievementProgress> UAchievementSaveManager::LoadProgress() const
 		UE_LOG(AchievementLog, Warning, TEXT("Save file doesn't exist: %s (User %d)"), *m_saveSlotSettings.slotName, m_saveSlotSettings.slotIndex);
 		return loadedAchievements;
 	}
-	// Load the save game (casting is required here)
+
 	const UAchievementSave* loadedSave = Cast<UAchievementSave>(UGameplayStatics::LoadGameFromSlot(m_saveSlotSettings.slotName, m_saveSlotSettings.slotIndex));
 
 	if (!loadedSave)
@@ -75,7 +75,7 @@ TMap<int32, FAchievementProgress> UAchievementSaveManager::LoadProgress() const
 	// copy over the loaded achievementsData
 	loadedAchievements = loadedSave->achievementProgressSave;
 
-	UE_LOG(AchievementLog, Log, TEXT("Successfully loaded %d achievementProgress"), loadedAchievements.Num());
+	UE_LOG(AchievementLog, Log, TEXT("Successfully loaded '%d' achievementProgress"), loadedAchievements.Num());
 
 	return loadedAchievements;
 }

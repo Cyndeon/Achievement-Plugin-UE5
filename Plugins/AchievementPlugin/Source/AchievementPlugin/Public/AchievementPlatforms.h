@@ -6,7 +6,8 @@
 
 #include "AchievementPlatforms.generated.h"
 
-
+class SteamAchievementsClass;
+class EpicGamesAchievementsClass;
 UCLASS()
 class ACHIEVEMENTPLUGIN_API UAchievementPlatformsClass : public UObject, public FTickableGameObject
 {

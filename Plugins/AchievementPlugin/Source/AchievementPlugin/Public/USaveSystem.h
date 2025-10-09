@@ -36,7 +36,7 @@ public:
 	bool SaveProgressAsync(const TMap<int32, FAchievementProgress>& achievements);
 
 	// returns whether the save was successful
-	// Note: For saves during runtime, use SaveProgressAsync instead!
+	// Note: This one saves sync, there is also an Async version
 	bool SaveProgress(const TMap<int32, FAchievementProgress>& achievements) const;
 
 	// returns the loaded achievementsData' progress

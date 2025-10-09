@@ -115,7 +115,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	// load runtime stats button
 	if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bLoadRuntimeStatsButton))
 	{
-		if (bLoadRuntimeStatsButton) // only when checked
+		if (bLoadRuntimeStatsButton)
 		{
 			UpdateRuntimeStats();
 
@@ -127,9 +127,8 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	// force save progress button
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceSaveAchievements))
 	{
-		if (bForceSaveAchievements) // only when checked
+		if (bForceSaveAchievements)
 		{
-			// From any class that has access to the engine
 			const auto* manager = UAchievementManagerSubSystem::Get();
 			manager->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
 
@@ -141,9 +140,8 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	// force load progress button
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceLoadAchievementProgress))
 	{
-		if (bForceLoadAchievementProgress) // only when checked
+		if (bForceLoadAchievementProgress)
 		{
-			// From any class that has access to the engine
 			auto* manager = UAchievementManagerSubSystem::Get();
 			manager->achievementsProgress = manager->GetSaveManager()->LoadProgress();
 
@@ -192,12 +190,17 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 				{
 					// generate an ID for itself and the Progress struct
 					// also increment the ID
-					const int linkID = m_nextLinkID++;
-
-					// generate a default name so it is obvious this is the next achievement
-					auto newKey = FString(TEXT("Achievement_")) + FString::FromInt(achievementsData.Num());
-					chiev.Key = newKey;
+					int linkID = m_nextLinkID++;
 					chiev.Value.OverrideLinkID(linkID);
+
+					// generate a default name
+					FString newKey = FString::Printf(TEXT("Achievement_%d"), linkID);
+					while (achievementsData.Contains(newKey))
+					{
+						linkID++;
+						newKey = FString::Printf(TEXT("Achievement_%d"), linkID);
+					}
+					chiev.Key = newKey;
 
 					// create the empty Achievement Progress as well
 					auto* manager = UAchievementManagerSubSystem::Get();
