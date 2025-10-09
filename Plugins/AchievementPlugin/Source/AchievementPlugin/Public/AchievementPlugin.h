@@ -116,6 +116,7 @@ public:
 	void CreateAchievement(const FString& localID, const FAchievementData& achievement);
 	// Override to detect when the property is clicked
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent) override;
+	virtual void PostInitProperties() override;
 
 	// marks the package dirty and attempts to save the config file
 	void AttemptSave();
@@ -131,7 +132,7 @@ private:
 
 	// platform specific data
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Achievement Platform"))
-	TEnumAsByte<EAchievementPlatforms> m_achievementPlatform;
+	TEnumAsByte<EAchievementPlatforms> m_achievementPlatform = LOCALONLY;
 
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Initialize Platform",
 			  Tooltip = "This will Initialize and Deinitialize the platform's API, disable this if you want to set it up yourself! If setting up manually, make sure to also call AchievementPlatformInitialized in your level blueprint!"))
@@ -139,7 +140,7 @@ private:
 
 	// Steam
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Steam App ID", EditCondition = "IsSteamPlatform", EditConditionHides))
-	int32 m_steamAppID;
+	int32 m_steamAppID = 0;
 
 	// EOS
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "EOS Info", EditCondition = "IsEpicPlatform", EditConditionHides))
@@ -172,7 +173,7 @@ public:
 	// Sets the progress for the achievement, including updating platforms
 	bool IncreaseAchievementProgress(const FString& achievementId, float increase);
 
-	void DeleteAchievementPopup() const;
+	static void DeleteAchievementPopup();
 
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
 	// the 'Key' is the LinkID that the achievementData has

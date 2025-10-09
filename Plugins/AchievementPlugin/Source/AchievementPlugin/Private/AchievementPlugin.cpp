@@ -223,6 +223,28 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	Super::PostEditChangeProperty(propertyChangedEvent);
 }
 
+void UAchievementPluginSettings::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+	if (achievementWidgetSettings.achievementWidget == nullptr)
+	{
+		UE_LOG(AchievementLog, Warning, TEXT("Achievement Widget/Popup is not set, using default widget"));
+
+		const UBlueprint* widgetBP = LoadObject<UBlueprint>(nullptr, TEXT("/AchievementPlugin/BPW_AchievementPopup.BPW_AchievementPopup"));
+		if (widgetBP && widgetBP->GeneratedClass)
+		{
+			achievementWidgetSettings.achievementWidget = widgetBP->GeneratedClass;
+			UE_LOG(AchievementLog, Log, TEXT("Successfully set the default Achievement widget"));
+			AttemptSave();
+		}
+		else
+		{
+			UE_LOG(AchievementLog, Error, TEXT("Failed to load default achievement widget"));
+		}
+	}
+}
+
 void UAchievementPluginSettings::AttemptSave()
 {
 	// Force the package to be marked as dirty and save
@@ -410,7 +432,8 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 		}
 		UAchievementPlatformsClass::SetPlatformAchievementProgress(achievement->platformData, achievementProgress->progress, achievementProgress->bIsAchievementUnlocked);
 
-		if (settings->achievementWidgetSettings.usePopups)
+		const auto& widgetSettings = settings->achievementWidgetSettings;
+		if (widgetSettings.usePopups && widgetSettings.achievementWidget != nullptr)
 		{
 			const float progress = achievementProgress->bIsAchievementUnlocked ? 0.f : (achievementProgress->progress / goal);
 			const TSoftObjectPtr<UTexture2D>& image = achievementProgress->bIsAchievementUnlocked ? achievement->unlockedTexture : achievement->lockedTexture;
@@ -424,7 +447,7 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 	return false;
 }
 
-void UAchievementManagerSubSystem::DeleteAchievementPopup() const
+void UAchievementManagerSubSystem::DeleteAchievementPopup()
 {
 	UAchievementPopupManager::Get()->DeleteFirstWidgetInstance();
 }
