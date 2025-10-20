@@ -95,8 +95,8 @@ public:
 
 	bool bLoadRuntimeStatsButton = false;
 
-	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Force Save Achievments"))
-	bool bForceSaveAchievements = false;
+	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Force Save Achievment Progress"))
+	bool bForceSaveAchievementProgress = false;
 
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Force Load Achievement Progress"))
 	bool bForceLoadAchievementProgress = false;

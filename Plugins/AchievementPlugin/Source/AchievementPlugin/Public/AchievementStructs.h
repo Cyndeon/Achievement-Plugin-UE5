@@ -177,7 +177,7 @@ public:
 
 	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Distance Between Popups",
 			  ToolTip = "The distance in the y axis between multiple popups"))
-	float distanceBetweenPopups = 140.f;
+	float distanceBetweenPopups = 162.f;
 
 	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Progress Achievements Delay",
 			  ToolTip = "How long before the same progress achievement popup can be shown again"))

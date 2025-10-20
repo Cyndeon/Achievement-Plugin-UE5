@@ -125,15 +125,15 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	}
 
 	// force save progress button
-	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceSaveAchievements))
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceSaveAchievementProgress))
 	{
-		if (bForceSaveAchievements)
+		if (bForceSaveAchievementProgress)
 		{
 			const auto* manager = UAchievementManagerSubSystem::Get();
 			manager->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
 
 			// Reset so it can be clicked again
-			bForceSaveAchievements = false;
+			bForceSaveAchievementProgress = false;
 		}
 	}
 
@@ -188,9 +188,31 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 			{
 				if (chiev.Key.IsEmpty())
 				{
-					// generate an ID for itself and the Progress struct
-					// also increment the ID
-					int linkID = m_nextLinkID++;
+					auto* manager = UAchievementManagerSubSystem::Get();
+					// if there are the max possible amount of achievements (unlikely but theoretically possible)
+					if (manager->achievementsProgress.Num() >= TNumericLimits<int32>::Max())
+					{
+						UE_LOG(AchievementLog, Error, TEXT("Max achievement limit reached (unique int32 values), last added achievement will not work, please remove it!"));
+						chiev.Key = "ERROR, DELETE ME, LIMIT REACHED";
+					}
+
+					int linkID = 0;
+					do
+					{
+						// generate an ID for itself and the Progress struct
+						// also increment the ID and make sure it is unique
+						linkID = m_nextLinkID;
+
+						if (m_nextLinkID == TNumericLimits<int32>::Max())
+						{
+							m_nextLinkID = TNumericLimits<int32>::Min();
+						}
+						else
+						{
+							m_nextLinkID++;
+						}
+					} while (manager->achievementsProgress.Contains(linkID));
+
 					chiev.Value.OverrideLinkID(linkID);
 
 					// generate a default name
@@ -203,7 +225,6 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 					chiev.Key = newKey;
 
 					// create the empty Achievement Progress as well
-					auto* manager = UAchievementManagerSubSystem::Get();
 					manager->achievementsProgress.Add(linkID, FAchievementProgress());
 					UE_LOG(AchievementLog, Log, TEXT("Created a new achievement with Link ID '%d'"), linkID);
 
