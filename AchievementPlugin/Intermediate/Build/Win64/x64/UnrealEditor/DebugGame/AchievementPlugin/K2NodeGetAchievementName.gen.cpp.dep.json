@@ -1,0 +1,20 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\plugins\\achievementplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\achievementplugin\\uht\\k2nodegetachievementname.gen.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\intermediate\\build\\win64\\x64\\chievpluginzoneeditor\\debuggame\\unrealed\\sharedpch.unrealed.project.nonoptimized.valapi.cpp20.h.pch",
+        "Includes": [
+            "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\plugins\\achievementplugin\\intermediate\\build\\win64\\x64\\unrealeditor\\debuggame\\achievementplugin\\definitions.achievementplugin.h",
+            "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\plugins\\achievementplugin\\source\\achievementplugin\\public\\k2nodegetachievementname.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\source\\editor\\blueprintgraph\\classes\\k2node_callfunction.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\source\\editor\\kismetcompiler\\public\\kismetcompilermisc.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\source\\editor\\kismetcompiler\\public\\bpterminal.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\source\\editor\\kismetcompiler\\public\\blueprintcompiledstatement.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\blueprintgraph\\uht\\k2node_callfunction.generated.h",
+            "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\plugins\\achievementplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\achievementplugin\\uht\\k2nodegetachievementname.generated.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

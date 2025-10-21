@@ -1,0 +1,17 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\plugins\\achievementplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\achievementplugin\\uht\\achievementstructs.gen.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\intermediate\\build\\win64\\x64\\chievpluginzoneeditor\\debuggame\\unrealed\\sharedpch.unrealed.project.nonoptimized.valapi.cpp20.h.pch",
+        "Includes": [
+            "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\plugins\\achievementplugin\\intermediate\\build\\win64\\x64\\unrealeditor\\debuggame\\achievementplugin\\definitions.achievementplugin.h",
+            "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\plugins\\achievementplugin\\source\\achievementplugin\\public\\achievementstructs.h",
+            "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\plugins\\achievementplugin\\source\\achievementplugin\\public\\achievementplatformsenum.h",
+            "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\plugins\\achievementplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\achievementplugin\\uht\\achievementplatformsenum.generated.h",
+            "d:\\year-3\\block-a\\ue5-project\\chievpluginzone\\plugins\\achievementplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\achievementplugin\\uht\\achievementstructs.generated.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

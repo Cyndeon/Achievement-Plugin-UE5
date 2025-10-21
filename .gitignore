@@ -1,24 +1,24 @@
-# Ignore all folders except Plugin
+# Ignore all folders except AchievementPlugin
 /*/
-!/Plugin/
+!/AchievementPlugin/
 
-# But within Plugin, ignore these:
-Plugin/Intermediate/
-Plugin/Saved/
-Plugin/DerivedDataCache/
+# But within AchievementPlugin, ignore these:
+AchievementAchievementPlugin/Intermediate/
+AchievementAchievementPlugin/Saved/
+AchievementAchievementPlugin/DerivedDataCache/
 
 # IDE/Editor specific files
-Plugin/.vs/
-Plugin/.vscode/
-Plugin/*.VC.db
-Plugin/*.opensdf
-Plugin/*.opendb
-Plugin/*.sdf
-Plugin/*.sln
-Plugin/*.suo
-Plugin/*.xcodeproj/
-Plugin/.idea/
+AchievementPlugin/.vs/
+AchievementPlugin/.vscode/
+AchievementPlugin/*.VC.db
+AchievementPlugin/*.opensdf
+AchievementPlugin/*.opendb
+AchievementPlugin/*.sdf
+AchievementPlugin/*.sln
+AchievementPlugin/*.suo
+AchievementPlugin/*.xcodeproj/
+AchievementPlugin/.idea/
 
 # OS specific
-Plugin/.DS_Store
-Plugin/Thumbs.db
+AchievementPlugin/.DS_Store
+AchievementPlugin/Thumbs.db

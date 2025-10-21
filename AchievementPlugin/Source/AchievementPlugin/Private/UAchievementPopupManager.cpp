@@ -1,0 +1,189 @@
+#include "UAchievementPopupManager.h"
+
+#include "AchievementLogCategory.h"
+#include "AchievementPlugin.h"
+#include "Components/TextBlock.h"
+#include "Components/Image.h"
+#include "Components/ProgressBar.h"
+#include "Engine/World.h"
+
+UWorld* UAchievementPopupManager::m_cachedWorld = nullptr;
+
+void UAchievementPopupManager::Initialize(FSubsystemCollectionBase& Collection)
+{
+	m_maxPopupsCachedValue = UAchievementPluginSettings::Get()->achievementWidgetSettings.maxToShow;
+	m_distanceBetweenPopupsCachedValue = UAchievementPluginSettings::Get()->achievementWidgetSettings.distanceBetweenPopups;
+
+	m_widgetInstances.Empty();
+	m_queuedPopups.Empty();
+	m_progressCooldowns.Empty();
+	m_cachedWorld = GetWorld();
+
+	Super::Initialize(Collection);
+}
+
+void UAchievementPopupManager::Deinitialize()
+{
+	for (const auto& widget : m_widgetInstances)
+	{
+		if (IsValid(widget))
+		{
+			widget->RemoveFromParent();
+		}
+	}
+	Super::Deinitialize();
+}
+
+UAchievementPopupManager* UAchievementPopupManager::Get()
+{
+	return m_cachedWorld->GetSubsystem<UAchievementPopupManager>();
+}
+
+void UAchievementPopupManager::QueuePopup(const FText& name, const TSoftObjectPtr<UTexture2D>& icon, const float progress = 0.f)
+{
+	const FName achievementName = FName(*name.ToString());
+	if (!FMath::IsNearlyZero(progress))
+	{
+		// if achievement is on cooldown, don't queue it
+		if (m_progressCooldowns.Contains(achievementName))
+		{
+			UE_LOG(AchievementUILog, Log, TEXT("Achievement '%s' is on cooldown"), *name.ToString());
+			return;
+		}
+
+		m_progressCooldowns.Add(achievementName, 0.f);
+	}
+
+	m_queuedPopups.Add(FAchievementNameAndIcon(name, icon, progress));
+}
+
+void UAchievementPopupManager::Tick(const float deltaTime)
+{
+		// progress cooldowns
+		if (m_progressCooldowns.Num() > 0)
+		{
+			const auto& cooldownTime = UAchievementPluginSettings::Get()->achievementWidgetSettings.delayBetweenSameProgressAchievementPopup;
+			// iterate through all elements, increase cooldown timer and remove if timer is more than or equal to the cooldown time
+			for (auto it = m_progressCooldowns.CreateIterator(); it; ++it)
+			{
+				it.Value() += deltaTime;
+
+				if (it.Value() >= cooldownTime)
+				{
+					it.RemoveCurrent();
+				}
+			}
+		}
+
+	if (m_queuedPopups.Num() > 0)
+	{
+		// if there are less popups than we can have
+		if (m_widgetInstances.Num() < m_maxPopupsCachedValue)
+		{
+			const auto data = m_queuedPopups[0];
+			m_queuedPopups.RemoveAt(0);
+
+			// create the new Popup (widget)
+			auto* widget = CreateWidgetInstance();
+
+			if (!widget)
+			{
+				UE_LOG(AchievementUILog, Error, TEXT("Something went wrong creating a Widget, please restart the engine if this occurs more!"));
+				return;
+			}
+
+			// find the name variable
+			if (auto* textBlock = Cast<UTextBlock>(widget->GetWidgetFromName(TEXT("AchievementName"))))
+			{
+				textBlock->SetText(data.name);
+			}
+			else UE_LOG(AchievementUILog, Warning, TEXT("Could not find TextBlock on Widget. Use the name AchievementName and set it to IsVariable!"));
+			// find the image variable
+			if (auto* image = Cast<UImage>(widget->GetWidgetFromName(TEXT("AchievementImage"))))
+			{
+				image->SetBrushFromTexture(data.image.LoadSynchronous());
+			}
+			else UE_LOG(AchievementUILog, Warning, TEXT("Could not find Image on Widget. Use the name AchievementImage and set it to IsVariable!"));
+			// if progress is used, also enable progress bar
+			if (auto* progressBar = Cast<UProgressBar>(widget->GetWidgetFromName(TEXT("AchievementProgressBar"))))
+			{
+				if (!FMath::IsNearlyZero(data.progress))
+				{
+					progressBar->SetVisibility(ESlateVisibility::Visible);
+					progressBar->SetPercent(data.progress);
+				}
+
+				else
+				{
+					progressBar->SetVisibility(ESlateVisibility::Collapsed);
+				}
+
+			}
+			else UE_LOG(AchievementUILog, Warning, TEXT("Could not find ProgressBar on Widget. Use the name AchievementProgressBar and set it to IsVariable!"));
+
+			widget->AddToViewport();
+
+			const int widgetInstanceIndex = m_widgetInstances.Num() - 1;
+			PositionWidget(widgetInstanceIndex);
+		}
+	}
+}
+
+UUserWidget* UAchievementPopupManager::CreateWidgetInstance()
+{
+	if (const UAchievementPluginSettings* settings = UAchievementPluginSettings::Get())
+	{
+		auto* widget = CreateWidget<UUserWidget>(m_cachedWorld, settings->achievementWidgetSettings.achievementWidget);
+		if (!widget)
+		{
+			UE_LOG(AchievementUILog, Error, TEXT("Could not create achievement widget!"));
+			return nullptr;
+		}
+		m_widgetInstances.Add(widget);
+		return widget;
+	}
+	return nullptr;
+}
+
+bool UAchievementPopupManager::DeleteFirstWidgetInstance()
+{
+	if (m_widgetInstances.Num() == 0) return false;
+
+	const auto widgetToRemove = m_widgetInstances[0];
+
+	m_widgetInstances.RemoveAt(0);
+
+	if (widgetToRemove)
+	{
+		// according to the UE5 API, RemoveFromViewport is deprecated, and they recommend using RemoveFromParent instead
+		widgetToRemove->RemoveFromParent();
+	}
+	UE_LOG(AchievementUILog, Log, TEXT("Deleting current Widget instance"));
+
+	RepositionAllWidgets();
+
+	return true;
+}
+
+void UAchievementPopupManager::PositionWidget(const int32 index)
+{
+	const auto& widget = m_widgetInstances[index];
+
+	if (auto* rootWidget = widget->GetRootWidget())
+	{
+		const FVector2D translation(0.0f, -(index * m_distanceBetweenPopupsCachedValue));
+		rootWidget->SetRenderTranslation(translation);
+	}
+}
+
+void UAchievementPopupManager::RepositionAllWidgets()
+{
+	const auto amount = m_widgetInstances.Num();
+	for (int i = 0; i < amount; i++)
+	{
+		if (IsValid(m_widgetInstances[i]))
+		{
+			PositionWidget(i);
+		}
+	}
+}

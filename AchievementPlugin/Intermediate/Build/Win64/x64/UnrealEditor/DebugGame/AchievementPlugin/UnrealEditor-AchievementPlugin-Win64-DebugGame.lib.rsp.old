@@ -1,0 +1,13 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UnrealEditor-AchievementPlugin-Win64-DebugGame.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"D:\Year-3\BLOCK-A\UE5-Project\ChievPluginZone\Intermediate\Build\Win64\x64\ChievPluginZoneEditor\DebugGame\UnrealEd\SharedPCH.UnrealEd.Project.NonOptimized.ValApi.Cpp20.h.obj"
+"D:\Year-3\BLOCK-A\UE5-Project\ChievPluginZone\Plugins\AchievementPlugin\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\AchievementPlugin\Module.AchievementPlugin.cpp.obj"
+"D:\Year-3\BLOCK-A\UE5-Project\ChievPluginZone\Plugins\AchievementPlugin\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\AchievementPlugin\AchievementPlugin.cpp.obj"
+"D:\Year-3\BLOCK-A\UE5-Project\ChievPluginZone\Plugins\AchievementPlugin\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\AchievementPlugin\Default.rc2.res"
+/OUT:"D:\Year-3\BLOCK-A\UE5-Project\ChievPluginZone\Plugins\AchievementPlugin\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\AchievementPlugin\UnrealEditor-AchievementPlugin-Win64-DebugGame.lib"

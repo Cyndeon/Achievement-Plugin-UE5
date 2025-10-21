@@ -1,0 +1,24 @@
+So you want to get started right away? This short guide's for you!
+
+1. Open up Unreal Engine
+2. Make sure the plugin is enabled (Edit->Plugins)
+
+Now time to set up the achievements
+
+3. Set up your achievements in Edit->Project Settings->Achievement Plugin (under the "Game" header)
+In order to create more achievements, just click the + in the map AchievementsData.
+The Key (name of the element) is what you will use later so make sure you use names you can easily remember! By default they will be called "Achievement_x" where x is the number of elements in the map by default
+There are also a bunch of variables you can set, I will quickly go through them here:
+Is Hidden = Unused by default. Can be used for your own achievement lists to hide achievements before they are unlocked.
+Display Name = What name to display when an achievement gets unlocked/progress.
+Description = Unused by default. Can be used for your own achievement lists to show a description.
+Locked/Unlocked texture = Used for Widget popups to show the icon of the progressed/unlocked achievement.
+Progress Goal = How many points need to be added before the achievement is unlocked.
+Platform Data = Data required for any of the supported platforms. At the moment those are only IDs for the achievements and stats for Steam and Epic.
+Current Progress = Debug data that shows the progress of the current achievement after the "Load/Update Runtime Stats" button is pressed.
+
+4. Select what platform you are using at the bottom of the settings page (Local, Steam and EOS are supported as of writing)
+5. Update your achievement's progress by using the "Change Achievement Progress" Node. The "Local Achievement Id" is the key you used earlier for the achievement in the map!
+
+That's it! By default, you will now get achievement popups when unlocking/making progress in achievements and, if set correctly, Steam and Epic's achievements will now work too.
+Of course there is much more you can do with this plugin, but this'll be enough to just get you started, have fun!
