@@ -3,9 +3,9 @@
 !/AchievementPlugin/
 
 # But within AchievementPlugin, ignore these:
-AchievementAchievementPlugin/Intermediate/
-AchievementAchievementPlugin/Saved/
-AchievementAchievementPlugin/DerivedDataCache/
+AchievementPlugin/Intermediate/
+AchievementPlugin/Saved/
+AchievementPlugin/DerivedDataCache/
 
 # IDE/Editor specific files
 AchievementPlugin/.vs/
