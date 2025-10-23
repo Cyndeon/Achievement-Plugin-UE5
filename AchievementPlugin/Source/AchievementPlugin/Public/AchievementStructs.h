@@ -49,7 +49,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Achievement Progress", meta = (ClampMin = "0"), SaveGame)
 	float progress = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Achievement Progress", SaveGame)
-	bool bIsAchievementUnlocked = false;
+	EUnlockedPlatforms unlockedOnPlatforms;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Achievement Progress", SaveGame)
 	FString unlockedTime = "Never";
 };

@@ -122,6 +122,11 @@ void UAchievementPluginBPLibrary::SetActiveSaveSlotIndex(const int32 newIndex)
 	return;
 }
 
+void UAchievementPluginBPLibrary::RetroactivelyUpdateAchievementsOnPlatforms()
+{
+	UAchievementManagerSubSystem::RetroactivelyUpdateAchievementsOnPlatforms();
+}
+
 void UAchievementPluginBPLibrary::AchievementPlatformInitialized(const EAchievementPlatforms platform, const bool init)
 {
 	if (auto* platformClass = UAchievementPlatformsClass::Get())

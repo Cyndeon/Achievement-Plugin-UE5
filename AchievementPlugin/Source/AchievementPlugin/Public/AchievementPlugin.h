@@ -130,10 +130,10 @@ private:
 	void UpdateRuntimeStats();
 	void OverrideAchievementsWithThoseFromSelectedPlatform();
 #endif
+private:
 	// this is only used to "generate" the next ID for achievements
 	UPROPERTY(config)
 	int32 m_nextLinkID = 1;
-private:
 
 	// platform specific data
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Achievement Platform"))
@@ -179,6 +179,9 @@ public:
 	bool IncreaseAchievementProgress(const FString& achievementId, float increase);
 
 	static void DeleteAchievementPopup();
+
+	UFUNCTION(BlueprintCallable)
+	static void RetroactivelyUpdateAchievementsOnPlatforms();
 
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
 	// the 'Key' is the LinkID that the achievementData has

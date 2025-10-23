@@ -423,6 +423,23 @@ void UAchievementManagerSubSystem::CleanupAchievements()
 		UE_LOG(AchievementLog, Log, TEXT("Cleanup finished, deleted achievement progress for %d achievements."), removedAchievements)
 }
 
+EUnlockedPlatforms GetSelectedPlatformAsEUnlockedPlatforms()
+{
+	switch (UAchievementPluginSettings::Get()->GetAchievementPlatform())
+	{
+		case  EAchievementPlatforms::STEAM:
+		{
+			return EUnlockedPlatforms::Steam;
+		}
+		case EAchievementPlatforms::EOS:
+		{
+			return EUnlockedPlatforms::Epic;
+		}
+
+		default: return EUnlockedPlatforms::None;
+	}
+}
+
 bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& achievementId, const float increase)
 {
 	const auto& settings = UAchievementPluginSettings::Get();
@@ -436,38 +453,50 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 	if (auto* achievementProgress = achievementsProgress.Find(linkId))
 	{
 		// if it was already unlocked, return
-		if (achievementProgress->bIsAchievementUnlocked)
-		{
-			UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked, skipping."), *achievementId);
-			return true;
-		}
-
-		// if goal has been reached, unlock it
 		const auto& achievement = UAchievementPluginSettings::Get()->achievementsData.Find(achievementId);
 		const auto goal = achievement->progressGoal;
+		bool localUnlocked = EnumHasAnyFlags(achievementProgress->unlockedOnPlatforms, EUnlockedPlatforms::Local);
 
-		if (achievementProgress->progress + increase >= goal)
+		if (!localUnlocked)
 		{
-			achievementProgress->progress = goal;
-			achievementProgress->bIsAchievementUnlocked = true;
-			achievementProgress->unlockedTime = FDateTime::Now().ToString();
-		}
-		// otherwise we just increase progress
-		else
-		{
-			achievementProgress->progress += increase;
-		}
-		UAchievementPlatformsClass::SetPlatformAchievementProgress(achievement->platformData, achievementProgress->progress, achievementProgress->bIsAchievementUnlocked);
+			// if goal has been reached, unlock it
+			if (achievementProgress->progress + increase >= goal)
+			{
+				achievementProgress->progress = goal;
+				achievementProgress->unlockedOnPlatforms |= EUnlockedPlatforms::Local;
+				achievementProgress->unlockedTime = FDateTime::Now().ToString();
 
-		const auto& widgetSettings = settings->achievementWidgetSettings;
-		if (widgetSettings.usePopups && widgetSettings.achievementWidget != nullptr)
-		{
-			const float progress = achievementProgress->bIsAchievementUnlocked ? 0.f : (achievementProgress->progress / goal);
-			const TSoftObjectPtr<UTexture2D>& image = achievementProgress->bIsAchievementUnlocked ? achievement->unlockedTexture : achievement->lockedTexture;
-			UAchievementPopupManager::Get()->QueuePopup(achievement->displayName, image, progress);
-		}
+				localUnlocked = true;
+				UE_LOG(AchievementLog, Log, TEXT("Unlocked achievement '%s'"), *achievementId);
+			}
+			// otherwise we just increase progress
+			else
+			{
+				achievementProgress->progress += increase;
+				UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%f'"), *achievementId, achievementProgress->progress);
+			}
 
-		UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%f'"), *achievementId, achievementProgress->progress);
+			// create widget to show progress/unlock
+			const auto& widgetSettings = settings->achievementWidgetSettings;
+			if (widgetSettings.usePopups && widgetSettings.achievementWidget != nullptr)
+			{
+				const float progress = localUnlocked ? 0.f : (achievementProgress->progress / goal);
+				const TSoftObjectPtr<UTexture2D>& image = localUnlocked ? achievement->unlockedTexture : achievement->lockedTexture;
+				UAchievementPopupManager::Get()->QueuePopup(achievement->displayName, image, progress);
+			}
+		}
+		else UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked. Checking other platforms next."), *achievementId);
+
+		if (!EnumHasAnyFlags(achievementProgress->unlockedOnPlatforms, GetSelectedPlatformAsEUnlockedPlatforms()))
+		{
+			const bool success = UAchievementPlatformsClass::SetPlatformAchievementProgress(achievement->platformData, achievementProgress->progress, localUnlocked);
+			if (success && localUnlocked)
+			{
+				achievementProgress->unlockedOnPlatforms |= GetSelectedPlatformAsEUnlockedPlatforms();
+			}
+		}
+		else UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked on selected platform."), *achievementId);
+
 		return true;
 	}
 	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for '%s'"), *achievementId);
@@ -479,8 +508,34 @@ void UAchievementManagerSubSystem::DeleteAchievementPopup()
 	UAchievementPopupManager::Get()->DeleteFirstWidgetInstance();
 }
 
+void UAchievementManagerSubSystem::RetroactivelyUpdateAchievementsOnPlatforms()
+{
+	if (UAchievementPlatformsClass::achievementPlatformInitialized)
+	{
+		const auto& progressAchievements = UAchievementManagerSubSystem::Get()->achievementsProgress;
+		const auto& achievementsData = UAchievementPluginSettings::Get()->achievementsData;
+
+		for (const auto& achievement : achievementsData)
+		{
+			if (const auto& progress = progressAchievements.Find(achievement.Value.GetLinkID()))
+			{
+				const bool success = UAchievementPlatformsClass::SetPlatformAchievementProgress(achievement.Value.platformData,
+																								progress->progress,
+																								EnumHasAnyFlags(progress->unlockedOnPlatforms, EUnlockedPlatforms::Local));
+				if (!success)
+				{
+					UE_LOG(AchievementPlatformLog, Error, TEXT("Platform has not been set up yet, cannot retroactively unlock achievements!"));
+					return;
+				}
+			}
+			else UE_LOG(AchievementLog, Warning, TEXT("Cannot find progress by Link Id '%d'"), achievement.Value.GetLinkID());
+		}
+	}
+}
+
 void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world)
 {
+
 	// Only initialize for actual game worlds, not editor preview worlds
 	if (world && world->IsGameWorld())
 	{
@@ -494,6 +549,7 @@ void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world)
 					FAchievementPluginModule::Get()->bWasManuallyInitialized = true;
 				}
 			}
+			RetroactivelyUpdateAchievementsOnPlatforms();
 		}
 	}
 }

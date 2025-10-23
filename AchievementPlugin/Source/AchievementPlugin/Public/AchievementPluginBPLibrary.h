@@ -43,6 +43,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Save Slot Index", Keywords = "Save Slot Index"), Category = "AchievementPlugin")
 	static void SetActiveSaveSlotIndex(int32 newIndex);
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Retroactviely Update Achievements On Platforms", Keywords = "Retroactviely Update Achievements Platforms"), Category = "AchievementPlugin")
+	static void RetroactivelyUpdateAchievementsOnPlatforms();
+
 	// this function should only be called when the user manually initializes the platform
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Achievement Platform Initialized", Keywords = "Achievement Platform Initialized"), Category = "AchievementPlugin")
 	static void AchievementPlatformInitialized(EAchievementPlatforms platform, bool init = true);

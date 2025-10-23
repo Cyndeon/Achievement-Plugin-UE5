@@ -24,3 +24,13 @@ enum EAchievementUploadTypes : uint8
 	Float UMETA(DisplayName = "Float"),
 	Int32 UMETA(DisplayName = "Int32")
 };
+
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
+enum class EUnlockedPlatforms : uint8
+{
+	None = 0,
+	Local = 1 << 0,  // 1
+	Steam = 1 << 1,  // 2
+	Epic = 1 << 2,  // 4
+};
+ENUM_CLASS_FLAGS(EUnlockedPlatforms)  // This enables bitwise operations
