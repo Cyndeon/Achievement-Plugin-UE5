@@ -1,3 +1,8 @@
+// -------------------------------------------------------------
+// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// -------------------------------------------------------------
+
+
 #include "UAchievementPopupManager.h"
 
 #include "AchievementLogCategory.h"
@@ -95,13 +100,23 @@ void UAchievementPopupManager::Tick(const float deltaTime)
 			// find the name variable
 			if (auto* textBlock = Cast<UTextBlock>(widget->GetWidgetFromName(TEXT("AchievementName"))))
 			{
+				FText name = data.name;
+				if (name.IsEmpty())
+				{
+					name = FText::FromString("ERROR, Empty name!");
+					UE_LOG(AchievementUILog, Warning, TEXT("Popup didn't get a name!"))
+				}
 				textBlock->SetText(data.name);
 			}
 			else UE_LOG(AchievementUILog, Warning, TEXT("Could not find TextBlock on Widget. Use the name AchievementName and set it to IsVariable!"));
 			// find the image variable
 			if (auto* image = Cast<UImage>(widget->GetWidgetFromName(TEXT("AchievementImage"))))
 			{
-				image->SetBrushFromTexture(data.image.LoadSynchronous());
+				if (!data.image.IsNull())
+				{
+					image->SetBrushFromTexture(data.image.LoadSynchronous());
+				}
+				else UE_LOG(AchievementUILog, Warning, TEXT("Popup didn't get a texture!"));
 			}
 			else UE_LOG(AchievementUILog, Warning, TEXT("Could not find Image on Widget. Use the name AchievementImage and set it to IsVariable!"));
 			// if progress is used, also enable progress bar

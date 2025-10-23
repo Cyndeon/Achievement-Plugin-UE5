@@ -7,18 +7,20 @@
 	"Category": "Achievements",
 	"CreatedBy": "Justin Comans",
 	"CreatedByURL": "https://cyndeon.github.io/",
-	"DocsURL": "",
-	"MarketplaceURL": "",
+	"DocsURL": "https://github.com/Cyndeon/Achievement-Plugin-UE5/wiki",
+	"MarketplaceURL": "https://www.fab.com/listings/64011bfb-1102-42ce-adbd-fbc58c6c7217",
 	"SupportURL": "",
 	"CanContainContent": true,
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
 	"Installed": false,
+	"EngineVersion": "5.6.0",
 	"Modules": [
 		{
 			"Name": "AchievementPlugin",
 			"Type": "Runtime",
-			"LoadingPhase": "PreLoadingScreen"
+			"LoadingPhase": "PreLoadingScreen",
+			"PlatformAllowList": ["Win64"]
 		}
 	]
 }

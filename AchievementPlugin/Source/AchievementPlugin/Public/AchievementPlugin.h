@@ -1,4 +1,9 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// -------------------------------------------------------------
+// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// -------------------------------------------------------------
+
+
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -140,7 +145,7 @@ private:
 
 	// Steam
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Steam App ID", EditCondition = "IsSteamPlatform", EditConditionHides))
-	int32 m_steamAppID = 0;
+	int32 m_steamAppID = 480;
 
 	// EOS
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "EOS Info", EditCondition = "IsEpicPlatform", EditConditionHides))

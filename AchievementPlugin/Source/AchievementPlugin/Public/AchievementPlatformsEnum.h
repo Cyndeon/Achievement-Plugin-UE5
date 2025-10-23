@@ -1,3 +1,8 @@
+// -------------------------------------------------------------
+// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// -------------------------------------------------------------
+
+
 // ReSharper disable CppInconsistentNaming
 #pragma once
 #include "CoreMinimal.h"

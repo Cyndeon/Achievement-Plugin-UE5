@@ -1,3 +1,7 @@
+// -------------------------------------------------------------
+// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// -------------------------------------------------------------
+
 #include "Platforms/EpicGamesPlatformAchievements.h"
 
 #include "AchievementLogCategory.h"
@@ -251,6 +255,12 @@ bool EpicGamesAchievementsClass::InitializeEos()
 
 	// due to a lack of proper help on the EOS SDK, I asked Claude.AI to help write the Init
 	const auto& info = UAchievementPluginSettings::Get()->GetEOSInfo();
+
+	if (info.ProductId.IsEmpty() || info.SandboxId.IsEmpty() || info.DeploymentId.IsEmpty())
+	{
+		UE_LOG(AchievementPlatformLog, Error, TEXT("EOS data was not filled in properly! Aborting initialization of EOS."))
+		return false;
+	}
 
 	EOS_InitializeOptions initOptions = {};
 	initOptions.ApiVersion = EOS_INITIALIZE_API_LATEST;

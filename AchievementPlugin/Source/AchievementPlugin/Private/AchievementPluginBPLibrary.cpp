@@ -1,3 +1,8 @@
+// -------------------------------------------------------------
+// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// -------------------------------------------------------------
+
+
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "AchievementPluginBPLibrary.h"

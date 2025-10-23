@@ -1,3 +1,7 @@
+// -------------------------------------------------------------
+// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// -------------------------------------------------------------
+
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "AchievementPlugin.h"
@@ -252,10 +256,12 @@ void UAchievementPluginSettings::PostInitProperties()
 	{
 		UE_LOG(AchievementLog, Warning, TEXT("Achievement Widget/Popup is not set, using default widget"));
 
-		const UBlueprint* widgetBP = LoadObject<UBlueprint>(nullptr, TEXT("/AchievementPlugin/BPW_AchievementPopup.BPW_AchievementPopup"));
-		if (widgetBP && widgetBP->GeneratedClass)
+		FSoftClassPath widgetPath(TEXT("/AchievementPlugin/BPW_AchievementPopup.BPW_AchievementPopup_C"));
+		TSubclassOf<UUserWidget> widgetClass = widgetPath.TryLoadClass<UUserWidget>();
+
+		if (widgetClass)
 		{
-			achievementWidgetSettings.achievementWidget = widgetBP->GeneratedClass;
+			achievementWidgetSettings.achievementWidget = widgetClass;
 			UE_LOG(AchievementLog, Log, TEXT("Successfully set the default Achievement widget"));
 			AttemptSave();
 		}

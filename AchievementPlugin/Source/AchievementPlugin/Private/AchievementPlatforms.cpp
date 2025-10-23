@@ -1,3 +1,7 @@
+// -------------------------------------------------------------
+// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// -------------------------------------------------------------
+
 // otherwise it will complain about logging using %s instead of %hs, even though %hs gives compile errors
 // ReSharper disable CppPrintfBadFormat
 

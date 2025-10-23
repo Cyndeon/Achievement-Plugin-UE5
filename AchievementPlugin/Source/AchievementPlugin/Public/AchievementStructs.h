@@ -1,3 +1,8 @@
+// -------------------------------------------------------------
+// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// -------------------------------------------------------------
+
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -172,7 +177,7 @@ public:
 			  ToolTip = "The achievement widget to use for popups. If using a custom one, make sure to check the user guide to make sure it will work!"))
 	TSubclassOf<UUserWidget> achievementWidget = nullptr;
 
-	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Max popups to show at once"))
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Max popups to show at once", ClampMin = "1"))
 	int maxToShow = 3;
 
 	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Distance Between Popups",
