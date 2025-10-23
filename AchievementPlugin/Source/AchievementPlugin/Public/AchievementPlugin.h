@@ -180,7 +180,6 @@ public:
 
 	static void DeleteAchievementPopup();
 
-	UFUNCTION(BlueprintCallable)
 	static void RetroactivelyUpdateAchievementsOnPlatforms();
 
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
