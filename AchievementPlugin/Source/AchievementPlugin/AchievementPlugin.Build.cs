@@ -64,12 +64,22 @@ public class AchievementPlugin : ModuleRules
             }
         );
 
-        // only works for win64 and with Steam, add more options later!
-        // Steam
-        var steamPath = Path.Combine(ModuleDirectory, "ThirdParty", "steamworks_sdk_162", "sdk");
+        // only works for win64, Steam
+        if (Target.Platform == UnrealTargetPlatform.Win64)
+        {
+	        // Add include path for Steam headers
+	        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "ThirdParty/steamworks_sdk_162/sdk/public"));
 
-        PublicAdditionalLibraries.Add(Path.Combine(steamPath, "redistributable_bin", "win64", "steam_api64.lib"));
-        RuntimeDependencies.Add("$(TargetOutputDir)/steam_api64.dll",
-            Path.Combine(steamPath, "redistributable_bin", "win64", "steam_api64.dll"));
+	        // Link the Steam library
+	        var SteamLibPath = Path.Combine(ModuleDirectory, "ThirdParty/steamworks_sdk_162/sdk/redistributable_bin/win64/steam_api64.lib");
+	        PublicAdditionalLibraries.Add(SteamLibPath);
+
+	        // Copy DLL to Binaries folder
+	        var SteamDllPath = Path.Combine(ModuleDirectory, "ThirdParty/steamworks_sdk_162/sdk/redistributable_bin/win64/steam_api64.dll");
+	        RuntimeDependencies.Add("$(BinaryOutputDir)/steam_api64.dll", SteamDllPath);
+
+	        // Delay-load the DLL
+	        PublicDelayLoadDLLs.Add("steam_api64.dll");
+        }
     }
 }
