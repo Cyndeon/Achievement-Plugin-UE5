@@ -19,19 +19,28 @@ void SteamUploadTypeNotSupported(const EAchievementUploadTypes& type)
 
 bool SteamAchievementsClass::Initialize()
 {
-	// just in case temporarily set it to false
+	// just in case (temporarily) set it to false in order to prevent accidental calls while it is being initialized
 	GetPlatformInitialized() = false;
 	m_steamInitialized = false;
+	const auto* settings = UAchievementPluginSettings::Get();
 
+#if STEAMWORKS_INCLUDED
 	// create the steam callbacks 
 	m_steamCallbacksClass = MakeUnique<SteamCallbacksClass>();
 
-	const auto* settings = UAchievementPluginSettings::Get();
+#else
+	// if Steamworks is not included, return false and log it!
+	UE_LOG(AchievementPlatformLog, Error, TEXT("Steamworks SDK has not been installed, please visit the documentation on how to install it!"));
+	return false;
+#endif
+
 #if WITH_EDITOR
 	// sets the environment variable for SteamAppID during editor (basically telling SteamAPI what SteamAppId is)
 	const FString appIdString = FString::Printf(TEXT("%d"), settings->GetSteamAppID());
 	FPlatformMisc::SetEnvironmentVar(TEXT("SteamAppId"), *appIdString);
 #endif
+
+#if STEAMWORKS_INCLUDED
 
 	m_appId = settings->GetSteamAppID();
 	// just to make sure the file exists
@@ -92,19 +101,25 @@ bool SteamAchievementsClass::Initialize()
 		}
 	}
 	return false;
+
+#endif
 }
 
 void SteamAchievementsClass::Shutdown()
 {
+#if STEAMWORKS_INCLUDED
 	UE_LOG(AchievementPlatformLog, Log, TEXT("Shutting down Steam API"));
 	SteamAPI_Shutdown();
+#endif
 }
 
 void SteamAchievementsClass::Tick()
 {
+#if STEAMWORKS_INCLUDED
 	if (!m_steamInitialized) return;
 	// run Steam's callbacks
 	SteamAPI_RunCallbacks();
+#endif
 }
 
 TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAchievementDataMap()
@@ -114,6 +129,7 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 		UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam API not initialized yet, cannot get achievements!"));
 		return TMap<FString, FAchievementData>();
 	}
+#if STEAMWORKS_INCLUDED
 
 	const uint32 numAchievements = SteamUserStats()->GetNumAchievements();
 	UE_LOG(AchievementPlatformLog, Log, TEXT("Found %d Steam achievements"), numAchievements);
@@ -149,12 +165,16 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 			   *FString(achievementID), *newAchievement.displayName.ToString());
 	}
 	return achievementsData;
+#else
+	return TMap<FString, FAchievementData>();
+#endif
 }
 
 bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatformData& achievementData, const float progress, const bool unlocked)
 {
 	if (GetPlatformInitialized())
 	{
+#if STEAMWORKS_INCLUDED
 		bool bSuccess = false;
 		// if the achievement should be unlocked
 		if (unlocked)
@@ -199,6 +219,7 @@ bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatf
 			UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR, SetStat/SetAchievevement returned false, could not update StoreStats()"));
 
 		return bSuccess;
+#endif
 	}
 	UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam API wasn't initialized properly!"));
 	return false;
@@ -206,49 +227,65 @@ bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatf
 
 bool SteamAchievementsClass::DeleteSteamAchievementProgress(const FAchievementPlatformData& achievementData)
 {
-	const auto& name = achievementData.steamAchievementID;
-	UE_LOG(AchievementPlatformLog, Log, TEXT("Attempting to delete achievement: '%s' on Steam"), *name);
-	return SteamUserStats()->ClearAchievement(TCHAR_TO_ANSI(*name));
+#if STEAMWORKS_INCLUDED
+	if (GetPlatformInitialized())
+	{
+		const auto& name = achievementData.steamAchievementID;
+		UE_LOG(AchievementPlatformLog, Log, TEXT("Attempting to delete achievement: '%s' on Steam"), *name);
+		return SteamUserStats()->ClearAchievement(TCHAR_TO_ANSI(*name));
+	}
+	else
+	{
+		UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam API wasn't initialized properly!"));
+	}
+#endif
+	return false;
 }
 
 bool SteamAchievementsClass::DeleteAllSteamAchievementProgress()
 {
-	const auto& achievements = UAchievementPluginSettings::Get()->achievementsData;
-	for (const auto& achievement : achievements)
+#if STEAMWORKS_INCLUDED
+	if (GetPlatformInitialized())
 	{
-		const auto& platformData = achievement.Value.platformData;
-
-		const auto& achievementName = platformData.steamAchievementID;
-		SteamUserStats()->ClearAchievement(TCHAR_TO_ANSI(*achievementName));
-		UE_LOG(AchievementPlatformLog, Log, TEXT("Attempting to delete achievement: '%s' on Steam"), *achievementName);
-
-		// if the achievement has any progress Stat, also set that to 0 (reset it)
-		const auto& statName = achievement.Value.platformData.steamStatID;
-		if (!statName.IsEmpty())
+		const auto& achievements = UAchievementPluginSettings::Get()->achievementsData;
+		for (const auto& achievement : achievements)
 		{
-			switch (const auto& type = platformData.uploadType)
-			{
-				case Float:
-				{
-					SteamUserStats()->SetStat(TCHAR_TO_ANSI(*statName), 0.f);
-					break;
-				}
-				case Int32:
-				{
-					SteamUserStats()->SetStat(TCHAR_TO_ANSI(*statName), 0);
-					break;
-				}
-				default:
-				{
-					SteamUploadTypeNotSupported(type);
-					break;
-				}
-			}
-			UE_LOG(AchievementPlatformLog, Log, TEXT("Attempting to delete Stat: '%s' on Steam"), *statName);
-		}
-	}
+			const auto& platformData = achievement.Value.platformData;
 
-	return true;
+			const auto& achievementName = platformData.steamAchievementID;
+			SteamUserStats()->ClearAchievement(TCHAR_TO_ANSI(*achievementName));
+			UE_LOG(AchievementPlatformLog, Log, TEXT("Attempting to delete achievement: '%s' on Steam"), *achievementName);
+
+			// if the achievement has any progress Stat, also set that to 0 (reset it)
+			const auto& statName = achievement.Value.platformData.steamStatID;
+			if (!statName.IsEmpty())
+			{
+				switch (const auto& type = platformData.uploadType)
+				{
+					case Float:
+					{
+						SteamUserStats()->SetStat(TCHAR_TO_ANSI(*statName), 0.f);
+						break;
+					}
+					case Int32:
+					{
+						SteamUserStats()->SetStat(TCHAR_TO_ANSI(*statName), 0);
+						break;
+					}
+					default:
+					{
+						SteamUploadTypeNotSupported(type);
+						break;
+					}
+				}
+				UE_LOG(AchievementPlatformLog, Log, TEXT("Attempting to delete Stat: '%s' on Steam"), *statName);
+			}
+		}
+		return true;
+	}
+#endif
+	UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam API wasn't initialized properly!"));
+	return false;
 }
 
 bool& SteamAchievementsClass::GetPlatformInitialized()
@@ -256,12 +293,16 @@ bool& SteamAchievementsClass::GetPlatformInitialized()
 	return UAchievementPlatformsClass::achievementPlatformInitialized;
 }
 
-SteamCallbacksClass::SteamCallbacksClass() :
-	m_CallbackUserStatsReceived(this, &SteamCallbacksClass::OnUserStatsReceived),
-	m_CallbackUserStatsStored(this, &SteamCallbacksClass::OnUserStatsStored),
-	m_CallbackAchievementStored(this, &SteamCallbacksClass::OnAchievementStored)
+SteamCallbacksClass::SteamCallbacksClass()
+#if STEAMWORKS_INCLUDED
+	:
+m_CallbackUserStatsReceived(this, &SteamCallbacksClass::OnUserStatsReceived),
+m_CallbackUserStatsStored(this, &SteamCallbacksClass::OnUserStatsStored),
+m_CallbackAchievementStored(this, &SteamCallbacksClass::OnAchievementStored)
+#endif
 {}
 
+#if STEAMWORKS_INCLUDED
 void SteamCallbacksClass::OnUserStatsReceived(UserStatsReceived_t* pCallback)
 {
 	if (pCallback->m_nGameID == SteamUtils()->GetAppID())
@@ -303,4 +344,4 @@ void SteamCallbacksClass::OnAchievementStored(UserAchievementStored_t* pCallback
 		UE_LOG(AchievementPlatformLog, Log, TEXT("Steam Achievement Unlocked: %s"), *achievementName);
 	}
 }
-#pragma endregion
+#endif

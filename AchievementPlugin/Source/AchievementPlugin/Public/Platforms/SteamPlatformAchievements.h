@@ -2,14 +2,12 @@
 // Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
 // -------------------------------------------------------------
 
-
 #pragma once
 
 #include "AchievementStructs.h"
-#pragma warning(push)
-#pragma warning(disable: 4996)  // disable "unsafe function" warnings
-#include "../ThirdParty/steamworks_sdk_162/sdk/public/steam/steam_api.h"
-#pragma warning(pop)
+#if STEAMWORKS_INCLUDED
+#include "../ThirdParty/Steamworks/sdk/public/steam/steam_api.h"
+#endif
 
 class SteamCallbacksClass;
 class ACHIEVEMENTPLUGIN_API SteamAchievementsClass
@@ -36,6 +34,7 @@ class ACHIEVEMENTPLUGIN_API SteamCallbacksClass
 {
 public:
 	SteamCallbacksClass();
+#if STEAMWORKS_INCLUDED
 	// callbacks for the Steam API
 	STEAM_CALLBACK(SteamCallbacksClass, OnUserStatsReceived, UserStatsReceived_t,
 				   m_CallbackUserStatsReceived);
@@ -43,4 +42,5 @@ public:
 				   m_CallbackUserStatsStored);
 	STEAM_CALLBACK(SteamCallbacksClass, OnAchievementStored,
 				   UserAchievementStored_t, m_CallbackAchievementStored);
+#endif
 };
