@@ -19,8 +19,8 @@
 		{
 			"Name": "AchievementPlugin",
 			"Type": "Runtime",
-			"LoadingPhase": "PreLoadingScreen",
-			"PlatformAllowList": ["Win64"]
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [ "Win64" ]
 		}
 	]
 }

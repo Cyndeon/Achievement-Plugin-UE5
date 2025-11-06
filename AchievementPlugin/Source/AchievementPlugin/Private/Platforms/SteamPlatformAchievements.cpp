@@ -7,6 +7,8 @@
 #include "AchievementLogCategory.h"
 #include "AchievementPlatforms.h"
 #include "AchievementPlugin.h"
+#include "Misc/Paths.h"
+#include "Interfaces/IPluginManager.h"
 
 int32 SteamAchievementsClass::m_appId = 0;
 TUniquePtr<SteamCallbacksClass> SteamAchievementsClass::m_steamCallbacksClass = nullptr;
@@ -19,71 +21,74 @@ void SteamUploadTypeNotSupported(const EAchievementUploadTypes& type)
 
 bool SteamAchievementsClass::Initialize()
 {
-	// just in case (temporarily) set it to false in order to prevent accidental calls while it is being initialized
 	GetPlatformInitialized() = false;
 	m_steamInitialized = false;
 	const auto* settings = UAchievementPluginSettings::Get();
-
+	
 #if STEAMWORKS_INCLUDED
-	// create the steam callbacks 
-	m_steamCallbacksClass = MakeUnique<SteamCallbacksClass>();
+	// PRE-LOAD the Steam DLL from the plugin's Binaries folder
+	FString pluginBaseDir = IPluginManager::Get().FindPlugin(TEXT("AchievementPlugin"))->GetBaseDir();
+	const FString steamDllPath = FPaths::Combine(pluginBaseDir, TEXT("Binaries/Win64/steam_api64.dll"));
 
+	UE_LOG(AchievementPlatformLog, Log, TEXT("Loading steam_api64.dll from: %s"), *steamDllPath);
+
+	const void* steamDllHandle = FPlatformProcess::GetDllHandle(*steamDllPath);
+	if (!steamDllHandle)
+	{
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Failed to load steam_api64.dll from plugin directory!"));
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Expected location: %s"), *steamDllPath);
+		return false;
+	}
+
+	UE_LOG(AchievementPlatformLog, Log, TEXT("Successfully pre-loaded steam_api64.dll"));
+
+	// Now create the steam callbacks - delay-load will find the already-loaded DLL
+	m_steamCallbacksClass = MakeUnique<SteamCallbacksClass>();
 #else
-	// if Steamworks is not included, return false and log it!
 	UE_LOG(AchievementPlatformLog, Error, TEXT("Steamworks SDK has not been installed, please visit the documentation on how to install it!"));
 	return false;
 #endif
 
+#if STEAMWORKS_INCLUDED
 #if WITH_EDITOR
-	// sets the environment variable for SteamAppID during editor (basically telling SteamAPI what SteamAppId is)
 	const FString appIdString = FString::Printf(TEXT("%d"), settings->GetSteamAppID());
 	FPlatformMisc::SetEnvironmentVar(TEXT("SteamAppId"), *appIdString);
 #endif
-
-#if STEAMWORKS_INCLUDED
-
 	m_appId = settings->GetSteamAppID();
-	// just to make sure the file exists
 	UAchievementPlatformsClass::Get()->CreateSteamAppIdFile(m_appId);
 
 	if (!SteamAPI_IsSteamRunning())
 	{
-		UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam is not running!"));
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Steam is not running!"));
 		return false;
 	}
 
 	UE_LOG(AchievementPlatformLog, Log, TEXT("Steam is running, attempting detailed initialization..."));
 
-	// Use SteamAPI_InitEx for detailed error information
 	SteamErrMsg errMsg;
 	switch (const ESteamAPIInitResult initResult = SteamAPI_InitEx(&errMsg))
 	{
 		case k_ESteamAPIInitResult_OK:
 			UE_LOG(AchievementPlatformLog, Log, TEXT("Steam API initialized successfully!"));
 			break;
-
 		case k_ESteamAPIInitResult_FailedGeneric:
-			UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam Init Failed: Generic failure"));
+			UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: Generic failure"));
 			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
 			return false;
-
 		case k_ESteamAPIInitResult_NoSteamClient:
-			UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam Init Failed: No Steam client running"));
+			UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: No Steam client running"));
 			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
 			return false;
-
 		case k_ESteamAPIInitResult_VersionMismatch:
-			UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam Init Failed: Version mismatch between client and SDK"));
+			UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: Version mismatch between client and SDK"));
 			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
 			return false;
-
 		default:
-			UE_LOG(AchievementPlatformLog, Error, TEXT(" Steam Init Failed: Unknown error %d"), (int32)initResult);
+			UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: Unknown error %d"), (int32)initResult);
 			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
 			return false;
 	}
 
-	// verify user has been found and is logged int
 	if (SteamUser() && SteamUser()->BLoggedOn())
 	{
 		const CSteamID steamID = SteamUser()->GetSteamID();
@@ -96,12 +101,10 @@ bool SteamAchievementsClass::Initialize()
 			UE_LOG(AchievementPlatformLog, Log, TEXT("RequestUserStats result: %s"), bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"));
 			GetPlatformInitialized() = true;
 			m_steamInitialized = true;
-
 			return bSuccess;
 		}
 	}
 	return false;
-
 #endif
 }
 

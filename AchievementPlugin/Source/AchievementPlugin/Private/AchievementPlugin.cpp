@@ -245,6 +245,17 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 		UAchievementPlatformsClass::CreateSteamAppIdFile(m_steamAppID);
 	}
 
+#if !STEAMWORKS_INCLUDED
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, m_achievementPlatform))
+	{
+		if (m_achievementPlatform == STEAM)
+		{
+			UE_LOG(AchievementLog, Warning, TEXT("Steamworks SDK has not been installed properly, please check the documentation on how to do so!"));
+			m_achievementPlatform = LOCALONLY;
+		}
+	}
+#endif
+
 	Super::PostEditChangeProperty(propertyChangedEvent);
 }
 
@@ -270,6 +281,11 @@ void UAchievementPluginSettings::PostInitProperties()
 			UE_LOG(AchievementLog, Error, TEXT("Failed to load default achievement widget"));
 		}
 	}
+
+#if !STEAMWORKS_INCLUDED
+	if (m_achievementPlatform == EAchievementPlatforms::STEAM)
+		m_achievementPlatform = EAchievementPlatforms::LOCALONLY;
+#endif
 }
 
 void UAchievementPluginSettings::AttemptSave()

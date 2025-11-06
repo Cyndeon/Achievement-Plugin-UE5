@@ -10,7 +10,6 @@
 #include "Modules/ModuleManager.h"
 #include "CoreMinimal.h"
 #include "AchievementPlatformsEnum.h"
-#include "Engine/DeveloperSettings.h"
 #include "AchievementStructs.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "Engine/World.h"
@@ -143,7 +142,6 @@ private:
 			  Tooltip = "This will Initialize and Deinitialize the platform's API, disable this if you want to set it up yourself! If setting up manually, make sure to also call AchievementPlatformInitialized in your level blueprint!"))
 	bool m_initializePlatform = true;
 
-	// Steam
 	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Steam App ID", EditCondition = "IsSteamPlatform", EditConditionHides))
 	int32 m_steamAppID = 480;
 
