@@ -36,7 +36,7 @@ public:
 };
 
 UCLASS(config = Game, defaultconfig, meta = (DisplayName = "Achievement System"))
-class UAchievementPluginSettings : public UObject
+class ACHIEVEMENTPLUGIN_API UAchievementPluginSettings : public UObject
 {
 	GENERATED_BODY()
 

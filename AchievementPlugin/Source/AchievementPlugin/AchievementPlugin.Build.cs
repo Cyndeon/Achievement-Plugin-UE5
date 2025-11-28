@@ -12,17 +12,7 @@ public class AchievementPlugin : ModuleRules
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         IWYUSupport = IWYUSupport.Full;
 
-        PublicIncludePaths.AddRange(
-            new string[] {
-                // ... add public include paths required here ...
-            }
-        );
-
-        PrivateIncludePaths.AddRange(
-            new string[] {
-                // ... add other private include paths required here ...
-            }
-        );
+        System.Console.WriteLine(Target.Type);
 
         PublicDependencyModuleNames.AddRange(
             new string[]
@@ -44,23 +34,6 @@ public class AchievementPlugin : ModuleRules
                 "Projects",
             }
         );
-
-        // Editor-only modules
-        if (Target.bBuildEditor)
-        {
-            PrivateDependencyModuleNames.AddRange(new string[]
-            {
-                "PropertyEditor",
-                "ToolMenus",
-                "DetailCustomizations",
-                "Settings",
-                "EditorSettingsViewer",
-                "Slate",
-                "SlateCore"
-            });
-        }
-
-
         DynamicallyLoadedModuleNames.AddRange(
             new string[]
             {

@@ -6,10 +6,6 @@
 
 #include "AchievementPlugin.h"
 
-#if WITH_EDITOR
-#include "ISettingsModule.h"
-#endif
-
 #include "AchievementLogCategory.h"
 #include "USaveSystem.h"
 #include "AchievementPlatforms.h"
@@ -21,32 +17,12 @@
 void FAchievementPluginModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-
-#if WITH_EDITOR
-	 // register the pluginSettings in the developer settings
-	if (ISettingsModule* settingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
-	{
-		settingsModule->RegisterSettings("Project", "Game", "AchievementPlugin",
-										 LOCTEXT("RuntimeSettingsName", "Achievement Plugin"),
-										 LOCTEXT("RuntimeSettingsDescription", "Configure Achievement Plugin settings"),
-										 GetMutableDefault<UAchievementPluginSettings>()
-		);
-	}
-#endif
 }
 
 void FAchievementPluginModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
-
-#if WITH_EDITOR
-	// unregister from settings system
-	if (ISettingsModule* settingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
-	{
-		settingsModule->UnregisterSettings("Project", "Plugins", "AchievementPlugin");
-	}
-#endif
 
 	// an extra shutdown at the end just to make sure it did shut down properly in case the program exits unexpectedly
 	if (!bHasPlatformShutDown)

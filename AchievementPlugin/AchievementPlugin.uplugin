@@ -21,6 +21,12 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"PlatformAllowList": [ "Win64" ]
+		},
+		{
+			"Name": "AchievementPluginEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [ "Win64" ]
 		}
 	]
 }
