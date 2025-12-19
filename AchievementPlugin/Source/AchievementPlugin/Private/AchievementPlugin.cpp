@@ -495,6 +495,53 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 	return false;
 }
 
+FAchievementProgress UAchievementManagerSubSystem::GetAchievementProgress(const FString& achievementId)
+{
+	return GetAchievementProgress(GetAchievementData(achievementId));
+}
+
+FAchievementProgress UAchievementManagerSubSystem::GetAchievementProgress(const FAchievementData& achievementData)
+{
+	const auto& settings = UAchievementPluginSettings::Get();
+	if (!settings)
+	{
+		UE_LOG(AchievementLog, Error, TEXT("Settings::Get() returned nullptr!"));
+		auto emptyData = FAchievementProgress();
+		return emptyData;
+	}
+	
+	const auto linkId = achievementData.GetLinkID();
+	if (const auto achievementProgress = achievementsProgress.Find(linkId))
+	{
+		return *achievementProgress;
+	}
+	
+	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress by Link Id: %d"), linkId);
+	
+	auto emptyData = FAchievementProgress();
+	return emptyData;
+}
+
+FAchievementData UAchievementManagerSubSystem::GetAchievementData(const FString& achievementId)
+{
+	const auto& settings = UAchievementPluginSettings::Get();
+	if (!settings)
+	{
+		UE_LOG(AchievementLog, Error, TEXT("Settings::Get() returned nullptr!"));
+		auto emptyData = FAchievementData();
+		return emptyData;
+	}
+	const auto achievement = UAchievementPluginSettings::Get()->achievementsData.Find(achievementId);
+	if (achievement != nullptr)
+	{
+		return *achievement;
+	}
+	
+	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement by Id: %s"), *achievementId);
+	auto emptyData = FAchievementData();
+	return emptyData;
+}
+
 void UAchievementManagerSubSystem::DeleteAchievementPopup()
 {
 	UAchievementPopupManager::Get()->DeleteFirstWidgetInstance();

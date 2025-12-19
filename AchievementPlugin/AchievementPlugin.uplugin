@@ -8,13 +8,13 @@
 	"CreatedBy": "Justin Comans",
 	"CreatedByURL": "https://cyndeon.github.io/",
 	"DocsURL": "https://github.com/Cyndeon/Achievement-Plugin-UE5/wiki",
-	"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/ba20d1e6-1c24-41f5-b5c6-c25fbcd10e92",
-	"SupportURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "https://github.com/Cyndeon/Achievement-Plugin-UE5/issues",
 	"CanContainContent": true,
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
 	"Installed": false,
-	"EngineVersion": "5.6.0",
+	"EngineVersion": "5.7.0",
 	"Modules": [
 		{
 			"Name": "AchievementPlugin",

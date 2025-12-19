@@ -176,6 +176,11 @@ public:
 	// Sets the progress for the achievement, including updating platforms
 	bool IncreaseAchievementProgress(const FString& achievementId, float increase);
 
+	FAchievementProgress GetAchievementProgress(const FString& achievementId);
+	FAchievementProgress GetAchievementProgress(const FAchievementData& achievementData);
+
+	static FAchievementData GetAchievementData(const FString& achievementId);
+
 	static void DeleteAchievementPopup();
 
 	static void RetroactivelyUpdateAchievementsOnPlatforms();

@@ -33,3 +33,13 @@ Here's some common issues that may occur when using the plugin.
 - Otherwise it is because the plugin will first attempt to connect to the platform, which means it might take a couple of tries before it is set up properly. This mostly seems to be an issue with EOS, it might take up to 3 attempts to download it but it should work regardless
 - Make sure you have a proper internet connection to connect to the platform of choice
 - Make sure the data (SteamAppId, Epic Games Store Data, etc.) is configured properly
+
+### **My blueprint-only project, after being packaged, tells me that the plugin "AchievementPlugin" is missing!**
+- This may happen for unknown reasons, but there is a very simple solution for it.
+  NOTE: You will need an IDE (Integrated Development Environment) for this to work, in case you do not have one already, I would recommend Visual Studio Community 2022 as this is the one I used the most. If you want to work with C++ more, I'd recommend Rider, which has a lot of useful features specifically for UE5 C++ development and it is free for students (such as myself).
+- Open up your blueprint-only project, click on the "Edit" button in the top-left and click "Add new C++ class", don't worry, you won't have to code or even touch this file at all!
+- Don't open up the file or anything, just close the Unreal Editor
+- Open the .uproject again, it will not prompt you to rebuild your project, this is fine, just do that and it will open the editor for you afterwards.
+- Try packaging your project again, this time, it should work!
+
+In case you, by any chance, are a programmer with C++ UE5 experience and know why this is happening, please reach out to me at: justingamedeveloperbusiness@gmail.com or use the Github Repo's Issues tab, as I would like to fix this issue, but haven't found a way outside of creating the C++ class.

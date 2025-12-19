@@ -9,6 +9,7 @@
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AchievementPlatformsEnum.h"
+#include "AchievementStructs.h"
 #include "AchievementPluginBPLibrary.generated.h"
 
 
@@ -22,6 +23,21 @@ public:
 		const FString& localAchievementId,
 		float change);
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Unlocked Status", Keywords = "Get Achievement unlocked Status"), Category = "AchievementPlugin")
+	static bool GetAchievementUnlockedStatus();
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Data", Keywords = "Get Achievement Data",
+			Tooltip = "Returns a copy of the achievement using the achievementId"), Category = "AchievementPlugin")
+	static FAchievementData GetAchievementData(const FString& achievementId);
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Progress By Id", Keywords = "Get Achievement Progress By Id",
+			Tooltip = "Returns a copy of the progress for the given achievement's Id"), Category = "AchievementPlugin")
+	static FAchievementProgress GetAchievementProgressById(const FString& achievementId);
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Progress By Data", Keywords = "Get Achievement Progress By Data", 
+			Tooltip = "Returns a copy of the progress for the given achievement"), Category = "AchievementPlugin")
+	static FAchievementProgress GetAchievementProgressByData(const FAchievementData& achievementData);
+	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress Async", Keywords = "Save Achievement Progress Async"), Category = "AchievementPlugin")
 	static bool SaveAchievementProgressAsync();
 

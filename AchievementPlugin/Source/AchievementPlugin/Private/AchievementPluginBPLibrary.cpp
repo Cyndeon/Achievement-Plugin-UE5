@@ -29,23 +29,30 @@ UAchievementManagerSubSystem* GetManager()
 	return nullptr;
 
 }
-//TArray<FString> UAchievementPluginBPLibrary::GetAchievementNames()
-//{
-//	UE_LOG(AchievementLog, Warning, TEXT("G!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!etAchievementNames CALLED!"));
-//	return TArray<FString> {"SDADS", "This?"};
-//
-//	const auto* settings = UAchievementPluginSettings::Get();
-//	if (settings != nullptr)
-//	{
-//		return UAchievementPluginSettings::Get()->GetAchievementNames();
-//	}
-//	UE_LOG(AchievementLog, Fatal, TEXT("FATAL: Could not find UAchievementPluginSettings!"));
-//	return TArray<FString>();
-//}
 
 bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& localAchievementId, const float change)
 {
 	return GetManager()->IncreaseAchievementProgress(localAchievementId, change);
+}
+
+bool UAchievementPluginBPLibrary::GetAchievementUnlockedStatus()
+{
+	return true;
+}
+
+FAchievementData UAchievementPluginBPLibrary::GetAchievementData(const FString& achievementId)
+{
+	return GetManager()->GetAchievementData(achievementId);
+}
+
+FAchievementProgress UAchievementPluginBPLibrary::GetAchievementProgressById(const FString& achievementId)
+{
+	return GetManager()->GetAchievementProgress(achievementId);
+}
+
+FAchievementProgress UAchievementPluginBPLibrary::GetAchievementProgressByData(const FAchievementData& achievementData)
+{
+	return GetManager()->GetAchievementProgress(achievementData);
 }
 
 bool UAchievementPluginBPLibrary::SaveAchievementProgressAsync()
