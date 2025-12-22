@@ -1,10 +1,15 @@
 Welcome to the offical repository of my (Justin Comans) Achievement Plugin for UE5!
 
-This is my work in progresss Achievement plugin for UE5, currently, it is not in a finished state yet.
-While most of the work has already been done, I am currently tackling the issue of the plugin not working in when built in Blueprint-only projects, as well as setting up a FAB page for the plugin, so everyone can easily and quickly add local, Steam, or EOS achievements to their game.
+Some of the features of this plugin are as follows:
+- Local achievements with customizable notifications
+- Steam & Epic Games achievements integration
+- 100% Blueprint-compatible (no C++ programming required)
+- Easy setup — creating achievements is quick and straightforward
+- Supports UE 5.5, 5.6, and 5.7
 
-This plugin features developer settings for setting up the achievements, many customization options, built-in pop-ip support and Steamworks is extremely install to add onto this plugin, with a helpful guide that can be found in the wiki. Do note that you do have to download the SDK yourself.
+Steam achievements do require a bit more manual setup, due to having to install the SDK yourself, however, a guide for that can be found on my wiki.
+Also do note that this repository by default only supports UE5.7, as that is the version listed in the .uplugin. The other versions can be found on FAB.
 
-This page will be updated once the FAB page is up.
+The FAB page for this plugin is available on FAB here: https://www.fab.com/listings/c9b10eac-d007-49e9-a546-97976c882f78
 
-If you have any questions or helpful tips, feel free to reach out to me via JustinGameDeveloperBusiness@gmail.com :D
+If you have any questions or helpful tips, feel free to reach out to me via JustinGameDeveloperBusiness@gmail.com or leave and issue in this Github repository.
