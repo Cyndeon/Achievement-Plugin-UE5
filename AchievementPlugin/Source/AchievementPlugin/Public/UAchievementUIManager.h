@@ -58,9 +58,11 @@ public:
 	bool ShowAchievementList() const;
 	bool HideAchievementList() const;
 	bool ForceUpdateAchievementList() const;
+	bool ChangeAchievementListFilters(const FAchievementFilterSettings& filter);
 	
 // Overrides
 	virtual void Tick(float deltaTime) override;
+	
 	// we need this in order to retrieve achievements stats in the editor
 	virtual bool IsTickableInEditor() const override
 	{

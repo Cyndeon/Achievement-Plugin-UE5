@@ -10,6 +10,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AchievementPlatformsEnum.h"
 #include "AchievementStructs.h"
+#include "UAchievementListWidget.h"
 #include "AchievementPluginBPLibrary.generated.h"
 
 
@@ -78,6 +79,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Hide Achievement List Widget", Keywords = "Hide Achievement List Widget"), Category = "AchievementPlugin")
 	static bool HideAchievementList();
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Change Filter For Achievement List Widget", Keywords = "Change Filter Achievement List Widget"), Category = "AchievementPlugin")
+	static bool ChangeAchievementListFilter(FAchievementFilterSettings filter);
 };
 
 

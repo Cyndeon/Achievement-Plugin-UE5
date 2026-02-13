@@ -111,6 +111,16 @@ bool UAchievementUIManager::ForceUpdateAchievementList() const
 	return false;
 }
 
+bool UAchievementUIManager::ChangeAchievementListFilters(const FAchievementFilterSettings& filter)
+{
+	if (AchievementListWidget)
+	{
+		AchievementListWidget->ApplyFilter(filter);
+		return true;
+	}
+	return false;
+}
+
 void UAchievementUIManager::Tick(const float deltaTime)
 {
 		// progress cooldowns

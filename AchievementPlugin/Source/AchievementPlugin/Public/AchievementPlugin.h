@@ -190,6 +190,8 @@ public:
 
 	static void RetroactivelyUpdateAchievementsOnPlatforms();
 
+	FAchievementProgress* GetAchievementProgressByLinkId(int32 linkId);
+
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "Achievements")
 	// the 'Key' is the LinkID that the achievementData has
 	TMap<int32, FAchievementProgress> achievementsProgress;

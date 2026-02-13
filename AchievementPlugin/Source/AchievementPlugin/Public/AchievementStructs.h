@@ -53,7 +53,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Achievement Progress", SaveGame)
 	FString unlockedTime = "Never";
 	
-	bool GetUnlockedLocally() const
+	bool IsUnlockedLocally() const
 	{
 		return (unlockedOnPlatforms & EUnlockedPlatforms::Local) != EUnlockedPlatforms::None;
 	}

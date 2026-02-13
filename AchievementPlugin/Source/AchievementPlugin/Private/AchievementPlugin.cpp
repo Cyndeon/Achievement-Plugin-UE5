@@ -80,7 +80,8 @@ void UAchievementPluginSettings::OverrideAchievementsWithThoseFromSelectedPlatfo
 		}
 		else
 		{
-			UE_LOG(AchievementPlatformLog, Warning, TEXT("Could not download achievements from the selected platform."));
+			UE_LOG(AchievementPlatformLog, Warning,
+			       TEXT("Could not download achievements from the selected platform."));
 		}
 
 		AttemptSave();
@@ -133,13 +134,15 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	}
 
 	// force download Steam achievements button
-	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceDownloadPlatformAchievements))
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings,
+	                                                        bForceDownloadPlatformAchievements))
 	{
 		// first we only set this to true, doesn't do anything else
 		// this will however, make the SafetyCheck button visible
 	}
 	// if the user is sure, override the old achievements with the new ones and save
-	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings, bForceDownloadPlatformAchievementsSafetyCheck))
+	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(UAchievementPluginSettings,
+	                                                        bForceDownloadPlatformAchievementsSafetyCheck))
 	{
 		OverrideAchievementsWithThoseFromSelectedPlatform();
 
@@ -150,7 +153,7 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 #pragma endregion
 	// If the save slot data has been modified, also update that of the USaveSystem's
 	else if (changedPropertyName == GET_MEMBER_NAME_CHECKED(FSaveSlotSettings, slotName) ||
-			 changedPropertyName == GET_MEMBER_NAME_CHECKED(FSaveSlotSettings, slotIndex))
+		changedPropertyName == GET_MEMBER_NAME_CHECKED(FSaveSlotSettings, slotIndex))
 	{
 		const auto getter = UAchievementManagerSubSystem::Get();
 		getter->GetSaveManager()->SetSaveSlotSettings(defaultSaveSlotSettings);
@@ -172,7 +175,10 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 					// if there are the max possible amount of achievements (unlikely but theoretically possible)
 					if (manager->achievementsProgress.Num() >= TNumericLimits<int32>::Max())
 					{
-						UE_LOG(AchievementLog, Error, TEXT("Max achievement limit reached (unique int32 values), last added achievement will not work, please remove it!"));
+						UE_LOG(AchievementLog, Error,
+						       TEXT(
+							       "Max achievement limit reached (unique int32 values), last added achievement will not work, please remove it!"
+						       ));
 						chiev.Key = "ERROR, DELETE ME, LIMIT REACHED";
 					}
 
@@ -191,7 +197,8 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 						{
 							m_nextLinkID++;
 						}
-					} while (manager->achievementsProgress.Contains(linkID));
+					}
+					while (manager->achievementsProgress.Contains(linkID));
 
 					chiev.Value.OverrideLinkID(linkID);
 
@@ -226,7 +233,10 @@ void UAchievementPluginSettings::PostEditChangeProperty(FPropertyChangedEvent& p
 	{
 		if (m_achievementPlatform == STEAM)
 		{
-			UE_LOG(AchievementLog, Warning, TEXT("Steamworks SDK has not been installed properly, please check the documentation on how to do so!"));
+			UE_LOG(AchievementLog, Warning,
+			       TEXT(
+				       "Steamworks SDK has not been installed properly, please check the documentation on how to do so!"
+			       ));
 			m_achievementPlatform = LOCALONLY;
 		}
 	}
@@ -283,9 +293,7 @@ void UAchievementPluginSettings::UpdateRuntimeStats()
 		{
 			// set the currentProgress
 			chiev.Value.UpdateProgressEditorOnly(*progress);
-
 		}
-
 	}
 }
 #endif
@@ -297,7 +305,10 @@ UAchievementManagerSubSystem* UAchievementManagerSubSystem::Get()
 		return GEngine->GetEngineSubsystem<UAchievementManagerSubSystem>();
 	}
 	// should never happen
-	UE_LOG(AchievementLog, Fatal, TEXT("Achievement Manager subsystem is deleted, please restart the engine/game (if this doesn't crash it already)!"));
+	UE_LOG(AchievementLog, Fatal,
+	       TEXT(
+		       "Achievement Manager subsystem is deleted, please restart the engine/game (if this doesn't crash it already)!"
+	       ));
 	return nullptr;
 }
 
@@ -347,7 +358,6 @@ void UAchievementManagerSubSystem::Deinitialize()
 	// Make sure to save the current achievementsData before exiting (using the sync, not Async version)
 	if (m_saveManager)
 	{
-
 		// then attempt to save
 		const bool bSavedCorrectly = m_saveManager->SaveProgress(achievementsProgress);
 		if (!bSavedCorrectly)
@@ -357,7 +367,8 @@ void UAchievementManagerSubSystem::Deinitialize()
 	}
 	else
 	{
-		UE_LOG(AchievementLog, Fatal, TEXT("SaveManager seems to have been deleted, achievementsData will not save properly!"));
+		UE_LOG(AchievementLog, Fatal,
+		       TEXT("SaveManager seems to have been deleted, achievementsData will not save properly!"));
 	}
 
 	// Deinitialize it last to make sure the subsystem isn't destroyed before we are done saving
@@ -412,23 +423,24 @@ void UAchievementManagerSubSystem::CleanupAchievements()
 	// log how many achievements were removed if any were
 	const int removedAchievements = startingCount - achievementsProgress.Num();
 	if (removedAchievements != 0)
-		UE_LOG(AchievementLog, Log, TEXT("Cleanup finished, deleted achievement progress for %d achievements."), removedAchievements)
+		UE_LOG(AchievementLog, Log, TEXT("Cleanup finished, deleted achievement progress for %d achievements."),
+	       removedAchievements)
 }
 
 EUnlockedPlatforms GetSelectedPlatformAsEUnlockedPlatforms()
 {
 	switch (UAchievementPluginSettings::Get()->GetAchievementPlatform())
 	{
-		case  EAchievementPlatforms::STEAM:
+	case EAchievementPlatforms::STEAM:
 		{
 			return EUnlockedPlatforms::Steam;
 		}
-		case EAchievementPlatforms::EOS:
+	case EAchievementPlatforms::EOS:
 		{
 			return EUnlockedPlatforms::Epic;
 		}
 
-		default: return EUnlockedPlatforms::None;
+	default: return EUnlockedPlatforms::None;
 	}
 }
 
@@ -465,7 +477,8 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 			else
 			{
 				achievementProgress->progress += increase;
-				UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%f'"), *achievementId, achievementProgress->progress);
+				UE_LOG(AchievementLog, Log, TEXT("Increased progress for '%s' to '%f'"), *achievementId,
+				       achievementProgress->progress);
 			}
 
 			// create widget to show progress/unlock
@@ -473,21 +486,26 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 			if (widgetSettings.usePopups && widgetSettings.achievementWidget != nullptr)
 			{
 				const float progress = localUnlocked ? 0.f : (achievementProgress->progress / goal);
-				const TSoftObjectPtr<UTexture2D>& image = localUnlocked ? achievement->unlockedTexture : achievement->lockedTexture;
+				const TSoftObjectPtr<UTexture2D>& image = localUnlocked
+					                                          ? achievement->unlockedTexture
+					                                          : achievement->lockedTexture;
 				UAchievementUIManager::Get()->QueuePopup(achievement->displayName, image, progress);
 			}
 		}
-		else UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked. Checking other platforms next."), *achievementId);
+		else UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked. Checking other platforms next."),
+		            *achievementId);
 
 		if (!EnumHasAnyFlags(achievementProgress->unlockedOnPlatforms, GetSelectedPlatformAsEUnlockedPlatforms()))
 		{
-			const bool success = UAchievementPlatformsClass::SetPlatformAchievementProgress(achievement->platformData, achievementProgress->progress, localUnlocked);
+			const bool success = UAchievementPlatformsClass::SetPlatformAchievementProgress(
+				achievement->platformData, achievementProgress->progress, localUnlocked);
 			if (success && localUnlocked)
 			{
 				achievementProgress->unlockedOnPlatforms |= GetSelectedPlatformAsEUnlockedPlatforms();
 			}
 		}
-		else UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked on selected platform."), *achievementId);
+		else UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked on selected platform."),
+		            *achievementId);
 
 		return true;
 	}
@@ -509,15 +527,15 @@ FAchievementProgress UAchievementManagerSubSystem::GetAchievementProgress(const 
 		auto emptyData = FAchievementProgress();
 		return emptyData;
 	}
-	
+
 	const auto linkId = achievementData.GetLinkID();
 	if (const auto achievementProgress = achievementsProgress.Find(linkId))
 	{
 		return *achievementProgress;
 	}
-	
+
 	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress by Link Id: %d"), linkId);
-	
+
 	auto emptyData = FAchievementProgress();
 	return emptyData;
 }
@@ -536,7 +554,7 @@ FAchievementData UAchievementManagerSubSystem::GetAchievementData(const FString&
 	{
 		return *achievement;
 	}
-	
+
 	UE_LOG(AchievementLog, Error, TEXT("Could not find achievement by Id: %s"), *achievementId);
 	auto emptyData = FAchievementData();
 	return emptyData;
@@ -558,23 +576,30 @@ void UAchievementManagerSubSystem::RetroactivelyUpdateAchievementsOnPlatforms()
 		{
 			if (const auto& progress = progressAchievements.Find(achievement.Value.GetLinkID()))
 			{
-				const bool success = UAchievementPlatformsClass::SetPlatformAchievementProgress(achievement.Value.platformData,
-																								progress->progress,
-																								EnumHasAnyFlags(progress->unlockedOnPlatforms, EUnlockedPlatforms::Local));
+				const bool success = UAchievementPlatformsClass::SetPlatformAchievementProgress(
+					achievement.Value.platformData,
+					progress->progress,
+					EnumHasAnyFlags(progress->unlockedOnPlatforms, EUnlockedPlatforms::Local));
 				if (!success)
 				{
-					UE_LOG(AchievementPlatformLog, Error, TEXT("Platform has not been set up yet, cannot retroactively unlock achievements!"));
+					UE_LOG(AchievementPlatformLog, Error,
+					       TEXT("Platform has not been set up yet, cannot retroactively unlock achievements!"));
 					return;
 				}
 			}
-			else UE_LOG(AchievementLog, Warning, TEXT("Cannot find progress by Link Id '%d'"), achievement.Value.GetLinkID());
+			else UE_LOG(AchievementLog, Warning, TEXT("Cannot find progress by Link Id '%d'"),
+			            achievement.Value.GetLinkID());
 		}
 	}
 }
 
+FAchievementProgress* UAchievementManagerSubSystem::GetAchievementProgressByLinkId(const int32 linkId)
+{
+	return achievementsProgress.Find(linkId);
+}
+
 void UAchievementManagerSubSystem::OnWorldInitialized(const UWorld* world)
 {
-
 	// Only initialize for actual game worlds, not editor preview worlds
 	if (world && world->IsGameWorld())
 	{

@@ -6,6 +6,37 @@
 #include "Blueprint/UserWidget.h"
 #include "UAchievementListWidget.generated.h"
 
+UENUM(BlueprintType)
+enum class EAchievementSortMode : uint8
+{
+	ProgressDescending = 0, // Default
+	ProgressAscending,
+	Creator, // untouched order
+	Alphabetical,
+	AlphabeticalReverse,
+};
+
+USTRUCT(BlueprintType)
+struct FAchievementFilterSettings
+{
+	GENERATED_BODY()
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EAchievementSortMode SortMode = EAchievementSortMode::ProgressDescending;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool unlockedAtBottom = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool hideUnlocked = false;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool hideLocked = false;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool hideHidden = false;
+};
+
 class UListView;
 class UAchievementRowData;
 
@@ -15,20 +46,27 @@ class ACHIEVEMENTPLUGIN_API UAchievementListWidget : public UUserWidget
 	GENERATED_BODY()
     
 public:
-	UFUNCTION(BlueprintCallable, Category = "Achievement UI")
+	UFUNCTION()
 	void PopulateList();
     
-	UFUNCTION(BlueprintCallable, Category = "Achievement UI")
+	UFUNCTION()
 	void RefreshDisplay() const;
     
-	UFUNCTION(BlueprintCallable, Category = "Achievement UI")
+	UFUNCTION()
 	void ClearList();
+	
+	UFUNCTION()
+	void ApplyFilter(const FAchievementFilterSettings& NewFilter);
     
-protected:
+private:
+	TArray<FString> GetFilteredAndSortedIds() const;
+	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UListView> AchievementListView;
-    
-	// Keep references alive
+	
 	UPROPERTY()
 	TArray<TObjectPtr<UAchievementRowData>> RowDataObjects;
+	
+	UPROPERTY()
+	FAchievementFilterSettings CurrentFilter;
 };

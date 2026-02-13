@@ -10,22 +10,18 @@
 
 void UAchievementListWidget::PopulateList()
 {
-	ClearList();
+    ClearList();
     
-	const auto& Settings = UAchievementPluginSettings::Get();
-	if (!Settings)
-	{
-		return;
-	}
+    TArray<FString> SortedIds = GetFilteredAndSortedIds();
     
-	for (const auto& Pair : Settings->achievementsData)
-	{
-		UAchievementRowData* RowData = NewObject<UAchievementRowData>(this);
-		RowData->AchievementId = Pair.Key;
+    for (const FString& Id : SortedIds)
+    {
+        UAchievementRowData* RowData = NewObject<UAchievementRowData>(this);
+        RowData->AchievementId = Id;
         
-		RowDataObjects.Add(RowData);
-		AchievementListView->AddItem(RowData);
-	}
+        RowDataObjects.Add(RowData);
+        AchievementListView->AddItem(RowData);
+    }
 }
 
 void UAchievementListWidget::RefreshDisplay() const
@@ -43,4 +39,122 @@ void UAchievementListWidget::ClearList()
 		AchievementListView->ClearListItems();
 	}
 	RowDataObjects.Empty();
+}
+
+void UAchievementListWidget::ApplyFilter(const FAchievementFilterSettings& NewFilter)
+{
+	CurrentFilter = NewFilter;
+	PopulateList();
+}
+
+TArray<FString> UAchievementListWidget::GetFilteredAndSortedIds() const
+{
+    TArray<FString> Result;
+    
+    const auto& Settings = UAchievementPluginSettings::Get();
+    if (!Settings)
+    {
+        return Result;
+    }
+    
+    UAchievementManagerSubSystem* Subsystem = UAchievementManagerSubSystem::Get();
+    if (!Subsystem)
+    {
+        return Result;
+    }
+    
+    // Gather and filter
+    for (const auto& Pair : Settings->achievementsData)
+    {
+        const FString& Id = Pair.Key;
+        const FAchievementData& Data = Pair.Value;
+        
+        const auto LinkId = Data.GetLinkID();
+        const FAchievementProgress* Progress = Subsystem->GetAchievementProgressByLinkId(LinkId);
+
+        const bool unlocked = Progress->IsUnlockedLocally();
+        
+        if (CurrentFilter.hideUnlocked && unlocked) continue;
+        if (CurrentFilter.hideLocked && !unlocked) continue;
+        if (CurrentFilter.hideHidden && Data.isHidden) continue;
+        
+        Result.Add(Id);
+    }
+    
+    // Sort
+    if (CurrentFilter.SortMode != EAchievementSortMode::Creator)
+    {
+        Result.Sort([&Settings, Subsystem, this](const FString& A, const FString& B)
+        {
+            const auto& DataA = *Settings->achievementsData.Find(A);
+            const auto& DataB = *Settings->achievementsData.Find(B);
+
+            const FAchievementProgress* ProgressA = Subsystem->GetAchievementProgressByLinkId(DataA.GetLinkID());
+            const FAchievementProgress* ProgressB = Subsystem->GetAchievementProgressByLinkId(DataB.GetLinkID());
+
+            const bool UnlockedA = ProgressA && ProgressA->progress >= DataA.progressGoal;
+            const bool UnlockedB = ProgressB && ProgressB->progress >= DataB.progressGoal;
+            
+            if (CurrentFilter.unlockedAtBottom && UnlockedA != UnlockedB)
+            {
+                return UnlockedB;
+            }
+            
+            switch (CurrentFilter.SortMode)
+            {
+                case EAchievementSortMode::ProgressDescending:
+                {
+                    const float PercentA = DataA.progressGoal > 0 
+                        ? (ProgressA ? ProgressA->progress : 0.0f) / static_cast<float>(DataA.progressGoal) 
+                        : 1.0f;
+                    const float PercentB = DataB.progressGoal > 0 
+                        ? (ProgressB ? ProgressB->progress : 0.0f) / static_cast<float>(DataB.progressGoal) 
+                        : 1.0f;
+                    return PercentA > PercentB;
+                }
+                
+                case EAchievementSortMode::ProgressAscending:
+                {
+                    const float PercentA = DataA.progressGoal > 0 
+                        ? (ProgressA ? ProgressA->progress : 0.0f) / static_cast<float>(DataA.progressGoal) 
+                        : 1.0f;
+                    const float PercentB = DataB.progressGoal > 0 
+                        ? (ProgressB ? ProgressB->progress : 0.0f) / static_cast<float>(DataB.progressGoal) 
+                        : 1.0f;
+                    return PercentA < PercentB;
+                }
+                
+                case EAchievementSortMode::Alphabetical:
+                    return DataA.displayName.CompareTo(DataB.displayName) < 0;
+                
+                case EAchievementSortMode::AlphabeticalReverse:
+                    return DataA.displayName.CompareTo(DataB.displayName) > 0;
+                
+                default:
+                    return false;
+            }
+        });
+    }
+    else if (CurrentFilter.unlockedAtBottom)
+    {
+        Result.Sort([&Settings, Subsystem](const FString& A, const FString& B)
+        {
+            const auto& DataA = *Settings->achievementsData.Find(A);
+            const auto& DataB = *Settings->achievementsData.Find(B);
+            
+            const FAchievementProgress* ProgressA = Subsystem->GetAchievementProgressByLinkId(DataA.GetLinkID());
+            const FAchievementProgress* ProgressB = Subsystem->GetAchievementProgressByLinkId(DataB.GetLinkID());
+            const bool UnlockedA = ProgressA && ProgressA->progress >= DataA.progressGoal;
+            const bool UnlockedB = ProgressB && ProgressB->progress >= DataB.progressGoal;
+            
+            if (UnlockedA != UnlockedB)
+            {
+                return UnlockedB;
+            }
+            
+            return false;
+        });
+    }
+    
+    return Result;
 }

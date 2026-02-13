@@ -16,7 +16,6 @@
 UAchievementPluginBPLibrary::UAchievementPluginBPLibrary(const FObjectInitializer& objectInitializer)
 	: Super(objectInitializer)
 {
-
 }
 
 UAchievementManagerSubSystem* GetManager()
@@ -27,7 +26,6 @@ UAchievementManagerSubSystem* GetManager()
 	}
 	UE_LOG(AchievementLog, Fatal, TEXT("FATAL: UAchievementPluginSettings returns a nullptr!"));
 	return nullptr;
-
 }
 
 bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& localAchievementId, const float change)
@@ -56,7 +54,7 @@ FAchievementProgress UAchievementPluginBPLibrary::GetAchievementProgressByData(c
 }
 
 bool UAchievementPluginBPLibrary::SaveAchievementProgressAsync()
-	{
+{
 	const auto* manager = GetManager();
 	return GetManager()->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
 }
@@ -164,4 +162,9 @@ bool UAchievementPluginBPLibrary::ShowAchievementList()
 bool UAchievementPluginBPLibrary::HideAchievementList()
 {
 	return UAchievementUIManager::Get()->HideAchievementList();
+}
+
+bool UAchievementPluginBPLibrary::ChangeAchievementListFilter(FAchievementFilterSettings filter)
+{
+	return UAchievementUIManager::Get()->ChangeAchievementListFilters(filter);
 }
