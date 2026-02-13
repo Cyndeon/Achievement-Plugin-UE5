@@ -11,6 +11,7 @@
 #include "CoreMinimal.h"
 #include "AchievementPlatformsEnum.h"
 #include "AchievementStructs.h"
+#include "UAchievementListWidget.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "Engine/World.h"
 
@@ -92,6 +93,10 @@ public:
 
 	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement Widget Settings", meta = (DisplayName = "Achievement Widget Settings"))
 	FAchievementWidgetSettings achievementWidgetSettings;
+	
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Achievement List Widget",
+			  ToolTip = "The achievement List widget used for the custom achievement list."))
+	TSubclassOf<UAchievementListWidget> achievementListWidget = nullptr;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Load/Update Runtime Stats",

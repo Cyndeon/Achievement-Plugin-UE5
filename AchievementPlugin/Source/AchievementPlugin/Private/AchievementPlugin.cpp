@@ -9,7 +9,7 @@
 #include "AchievementLogCategory.h"
 #include "USaveSystem.h"
 #include "AchievementPlatforms.h"
-#include "UAchievementPopupManager.h"
+#include "UAchievementUIManager.h"
 
 
 #define LOCTEXT_NAMESPACE "FAchievementPluginModule"
@@ -474,7 +474,7 @@ bool UAchievementManagerSubSystem::IncreaseAchievementProgress(const FString& ac
 			{
 				const float progress = localUnlocked ? 0.f : (achievementProgress->progress / goal);
 				const TSoftObjectPtr<UTexture2D>& image = localUnlocked ? achievement->unlockedTexture : achievement->lockedTexture;
-				UAchievementPopupManager::Get()->QueuePopup(achievement->displayName, image, progress);
+				UAchievementUIManager::Get()->QueuePopup(achievement->displayName, image, progress);
 			}
 		}
 		else UE_LOG(AchievementLog, Log, TEXT("Achievement '%s' was already unlocked. Checking other platforms next."), *achievementId);
@@ -544,7 +544,7 @@ FAchievementData UAchievementManagerSubSystem::GetAchievementData(const FString&
 
 void UAchievementManagerSubSystem::DeleteAchievementPopup()
 {
-	UAchievementPopupManager::Get()->DeleteFirstWidgetInstance();
+	UAchievementUIManager::Get()->DeleteFirstWidgetInstance();
 }
 
 void UAchievementManagerSubSystem::RetroactivelyUpdateAchievementsOnPlatforms()

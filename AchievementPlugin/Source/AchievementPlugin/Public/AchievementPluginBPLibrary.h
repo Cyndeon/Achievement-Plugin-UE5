@@ -69,6 +69,15 @@ public:
 	// this function is required for the Widget to function properly
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Remove Achievement Widget", Keywords = "Achievement Widget Remove"), Category = "AchievementPlugin")
 	static void RemoveAchievementWidget();
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Create Achievement List Widget", Keywords = "Create Achievement List Widget"), Category = "AchievementPlugin")
+	static bool CreateAchievementList();
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Show Achievement List Widget", Keywords = "Show Achievement List Widget"), Category = "AchievementPlugin")
+	static bool ShowAchievementList();
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Hide Achievement List Widget", Keywords = "Hide Achievement List Widget"), Category = "AchievementPlugin")
+	static bool HideAchievementList();
 };
 
 

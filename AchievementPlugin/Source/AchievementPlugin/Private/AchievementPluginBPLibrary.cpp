@@ -10,7 +10,7 @@
 #include "AchievementLogCategory.h"
 #include "AchievementPlatforms.h"
 #include "AchievementPlugin.h"
-#include "UAchievementPopupManager.h"
+#include "UAchievementUIManager.h"
 #include "USaveSystem.h"
 
 UAchievementPluginBPLibrary::UAchievementPluginBPLibrary(const FObjectInitializer& objectInitializer)
@@ -149,4 +149,19 @@ void UAchievementPluginBPLibrary::AchievementPlatformInitialized(const EAchievem
 void UAchievementPluginBPLibrary::RemoveAchievementWidget()
 {
 	GetManager()->DeleteAchievementPopup();
+}
+
+bool UAchievementPluginBPLibrary::CreateAchievementList()
+{
+	return UAchievementUIManager::Get()->CreateAchievementList();
+}
+
+bool UAchievementPluginBPLibrary::ShowAchievementList()
+{
+	return UAchievementUIManager::Get()->ShowAchievementList();
+}
+
+bool UAchievementPluginBPLibrary::HideAchievementList()
+{
+	return UAchievementUIManager::Get()->HideAchievementList();
 }

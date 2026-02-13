@@ -52,6 +52,11 @@ public:
 	EUnlockedPlatforms unlockedOnPlatforms = EUnlockedPlatforms::None;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Achievement Progress", SaveGame)
 	FString unlockedTime = "Never";
+	
+	bool GetUnlockedLocally() const
+	{
+		return (unlockedOnPlatforms & EUnlockedPlatforms::Local) != EUnlockedPlatforms::None;
+	}
 };
 
 USTRUCT(BlueprintType)
