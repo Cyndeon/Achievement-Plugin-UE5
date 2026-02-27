@@ -18,10 +18,11 @@ AchievementPlugin/*.sln
 AchievementPlugin/*.suo
 AchievementPlugin/*.xcodeproj/
 AchievementPlugin/.idea/
+AchievementPlugin/Binaries/
 
 # OS specific
 AchievementPlugin/.DS_Store
 AchievementPlugin/Thumbs.db
 
 # Don't include Steamworks or other Third Party Libs
-AchievementPlugin/source/ThirdParty/
+AchievementPlugin/source/AchievementPlugin/ThirdParty/
