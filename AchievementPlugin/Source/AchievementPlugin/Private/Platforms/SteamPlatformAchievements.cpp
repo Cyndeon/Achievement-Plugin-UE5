@@ -9,22 +9,125 @@
 #include "AchievementPlugin.h"
 #include "Misc/Paths.h"
 #include "Interfaces/IPluginManager.h"
+#if WITH_EDITOR
+#include "UObject/SavePackage.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#endif
 
 int32 SteamAchievementsClass::m_appId = 0;
 TUniquePtr<SteamCallbacksClass> SteamAchievementsClass::m_steamCallbacksClass = nullptr;
 bool SteamAchievementsClass::m_steamInitialized = false;
 
+#pragma region helpers
+#if STEAMWORKS_INCLUDED
+UTexture2D* CreateTextureFromSteamIcon(const int32 IconHandle, const FString& TextureName, const FString& PackagePath,
+                                       const bool Grayscale = false)
+{
+	if (IconHandle == 0) return nullptr;
+
+	uint32 Width = 0;
+	uint32 Height = 0;
+	if (!SteamUtils()->GetImageSize(IconHandle, &Width, &Height) || Width == 0 || Height == 0)
+	{
+		return nullptr;
+	}
+
+	TArray<uint8> ImageData;
+	ImageData.SetNumZeroed(Width * Height * 4);
+
+	if (!SteamUtils()->GetImageRGBA(IconHandle, ImageData.GetData(), ImageData.Num()))
+	{
+		return nullptr;
+	}
+
+#if WITH_EDITOR
+	const FString FullPackagePath = PackagePath / TextureName;
+	UPackage* Package = CreatePackage(*FullPackagePath);
+	Package->FullyLoad();
+
+	UTexture2D* Texture = NewObject<UTexture2D>(Package, *TextureName, RF_Public | RF_Standalone);
+	Texture->Source.Init(Width, Height, 1, 1, TSF_BGRA8);
+
+	uint8* MipData = Texture->Source.LockMip(0);
+	for (uint32 i = 0; i < Width * Height; ++i)
+	{
+		const uint8 R = ImageData[i * 4 + 0];
+		const uint8 G = ImageData[i * 4 + 1];
+		const uint8 B = ImageData[i * 4 + 2];
+		const uint8 A = ImageData[i * 4 + 3];
+
+		if (Grayscale)
+		{
+			const uint8 Gray = static_cast<uint8>(0.299f * R + 0.587f * G + 0.114f * B);
+			MipData[i * 4 + 0] = Gray; // B
+			MipData[i * 4 + 1] = Gray; // G
+			MipData[i * 4 + 2] = Gray; // R
+		}
+		else
+		{
+			MipData[i * 4 + 0] = B;
+			MipData[i * 4 + 1] = G;
+			MipData[i * 4 + 2] = R;
+		}
+		MipData[i * 4 + 3] = A;
+	}
+	Texture->Source.UnlockMip(0);
+
+	Texture->CompressionSettings = TC_Default;
+	Texture->MipGenSettings = TMGS_NoMipmaps;
+	Texture->SRGB = true;
+	Texture->UpdateResource();
+
+	Texture->PostEditChange();
+	Texture->MarkPackageDirty();
+	
+	FAssetRegistryModule::AssetCreated(Texture);
+
+	const FString PackageFilename = FPackageName::LongPackageNameToFilename(
+		FullPackagePath, FPackageName::GetAssetPackageExtension());
+
+	FSavePackageArgs SaveArgs;
+	SaveArgs.TopLevelFlags = RF_Public | RF_Standalone;
+	UPackage::SavePackage(Package, Texture, *PackageFilename, SaveArgs);
+
+	return Texture;
+#else
+	return nullptr;
+#endif
+}
+#endif
+
+void CleanAndCreateIconFolders(const FString& GamePath)
+{
+	const FString RelativePath = GamePath.StartsWith(TEXT("/Game/")) 
+		? GamePath.RightChop(6) 
+		: GamePath;
+	const FString AbsolutePath = FPaths::ProjectContentDir() / RelativePath;
+    
+	// delete old folder
+	if (IFileManager::Get().DirectoryExists(*AbsolutePath))
+	{
+		IFileManager::Get().DeleteDirectory(*AbsolutePath, false, true);
+	}
+    
+	// Create new structure
+	IFileManager::Get().MakeDirectory(*(AbsolutePath / TEXT("UnlockedTextures")), true);
+	IFileManager::Get().MakeDirectory(*(AbsolutePath / TEXT("LockedTextures")), true);
+}
+
 void SteamUploadTypeNotSupported(const EAchievementUploadTypes& type)
 {
-	UE_LOG(AchievementPlatformLog, Error, TEXT("Achievement Type: %s is not supported for Steam uploads!"), *UEnum::GetValueAsString(type));
+	UE_LOG(AchievementPlatformLog, Error, TEXT("Achievement Type: %s is not supported for Steam uploads!"),
+	       *UEnum::GetValueAsString(type));
 }
+#pragma endregion
 
 bool SteamAchievementsClass::Initialize()
 {
 	GetPlatformInitialized() = false;
 	m_steamInitialized = false;
 	const auto* settings = UAchievementPluginSettings::Get();
-	
+
 #if STEAMWORKS_INCLUDED
 	// PRE-LOAD the Steam DLL from the plugin's Binaries folder
 	FString pluginBaseDir = IPluginManager::Get().FindPlugin(TEXT("AchievementPlugin"))->GetBaseDir();
@@ -45,7 +148,8 @@ bool SteamAchievementsClass::Initialize()
 	// Now create the steam callbacks - delay-load will find the already-loaded DLL
 	m_steamCallbacksClass = MakeUnique<SteamCallbacksClass>();
 #else
-	UE_LOG(AchievementPlatformLog, Error, TEXT("Steamworks SDK has not been installed, please visit the documentation on how to install it!"));
+	UE_LOG(AchievementPlatformLog, Error,
+	       TEXT("Steamworks SDK has not been installed, please visit the documentation on how to install it!"));
 	return false;
 #endif
 
@@ -68,25 +172,25 @@ bool SteamAchievementsClass::Initialize()
 	SteamErrMsg errMsg;
 	switch (const ESteamAPIInitResult initResult = SteamAPI_InitEx(&errMsg))
 	{
-		case k_ESteamAPIInitResult_OK:
-			UE_LOG(AchievementPlatformLog, Log, TEXT("Steam API initialized successfully!"));
-			break;
-		case k_ESteamAPIInitResult_FailedGeneric:
-			UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: Generic failure"));
-			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-			return false;
-		case k_ESteamAPIInitResult_NoSteamClient:
-			UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: No Steam client running"));
-			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-			return false;
-		case k_ESteamAPIInitResult_VersionMismatch:
-			UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: Version mismatch between client and SDK"));
-			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-			return false;
-		default:
-			UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: Unknown error %d"), (int32)initResult);
-			UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
-			return false;
+	case k_ESteamAPIInitResult_OK:
+		UE_LOG(AchievementPlatformLog, Log, TEXT("Steam API initialized successfully!"));
+		break;
+	case k_ESteamAPIInitResult_FailedGeneric:
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: Generic failure"));
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
+		return false;
+	case k_ESteamAPIInitResult_NoSteamClient:
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: No Steam client running"));
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
+		return false;
+	case k_ESteamAPIInitResult_VersionMismatch:
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: Version mismatch between client and SDK"));
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
+		return false;
+	default:
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Steam Init Failed: Unknown error %d"), (int32)initResult);
+		UE_LOG(AchievementPlatformLog, Error, TEXT("Error message: %s"), ANSI_TO_TCHAR(errMsg));
+		return false;
 	}
 
 	if (SteamUser() && SteamUser()->BLoggedOn())
@@ -98,7 +202,8 @@ bool SteamAchievementsClass::Initialize()
 		{
 			UE_LOG(AchievementPlatformLog, Log, TEXT("SteamUserStats interface ready"));
 			const auto bSuccess = static_cast<bool>(SteamUserStats()->RequestUserStats(SteamUser()->GetSteamID()));
-			UE_LOG(AchievementPlatformLog, Log, TEXT("RequestUserStats result: %s"), bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"));
+			UE_LOG(AchievementPlatformLog, Log, TEXT("RequestUserStats result: %s"),
+			       bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"));
 			GetPlatformInitialized() = true;
 			m_steamInitialized = true;
 			return bSuccess;
@@ -139,6 +244,14 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 
 	TMap<FString, FAchievementData> achievementsData = TMap<FString, FAchievementData>();
 
+	// set paths for textures
+	// todo: make customizable paths in user settings!
+	const FString IconsPath = "/Game/Achievements";
+	// todo make function to get paths
+	const FString UnlockedPath = IconsPath + "/UnlockedTextures";
+	const FString LockedPath = IconsPath + "/LockedTextures";
+	
+	CleanAndCreateIconFolders(IconsPath);
 	// using uint32 since Steam api expects that
 	for (uint32 i = 0; i < numAchievements; ++i)
 	{
@@ -147,13 +260,65 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 		if (!achievementID) continue;
 
 		FAchievementData newAchievement;
-		newAchievement.isHidden = static_cast<bool>(SteamUserStats()->GetAchievementDisplayAttribute(achievementID, "hidden"));
+		newAchievement.isHidden = static_cast<bool>(SteamUserStats()->GetAchievementDisplayAttribute(
+			achievementID, "hidden"));
 
-		newAchievement.displayName = FText::FromString(SteamUserStats()->GetAchievementDisplayAttribute(achievementID, "name"));
-		newAchievement.description = FText::FromString(SteamUserStats()->GetAchievementDisplayAttribute(achievementID, "desc"));
+		newAchievement.displayName = FText::FromString(
+			SteamUserStats()->GetAchievementDisplayAttribute(achievementID, "name"));
+		newAchievement.description = FText::FromString(
+			SteamUserStats()->GetAchievementDisplayAttribute(achievementID, "desc"));
+		
+		// Get current state first
+		bool bWasAchieved = false;
+		SteamUserStats()->GetAchievement(achievementID, &bWasAchieved);
 
-		// todo: Icons (if there is time left over)
+		// Temporarily unlock locally (no StoreStats so no notification)
+		if (!bWasAchieved)
+		{
+			SteamUserStats()->SetAchievement(achievementID);
+		}
 
+		// Get the colored icon
+		const int32 IconHandle = SteamUserStats()->GetAchievementIcon(achievementID);
+		// make sure the icon exists
+		
+		bool bValidIcon = false;
+		if (IconHandle != 0)
+		{
+			uint32 Width = 0;
+			uint32 Height = 0;
+			if (SteamUtils()->GetImageSize(IconHandle, &Width, &Height) && Width > 0 && Height > 0)
+			{
+				bValidIcon = true;
+			}
+		}
+
+		// Create both textures from the colored icon
+		if (bValidIcon)
+		{
+			const FString AchievementName = FString(ANSI_TO_TCHAR(achievementID));
+    
+			if (UTexture2D* UnlockedTex = CreateTextureFromSteamIcon(IconHandle, AchievementName, UnlockedPath, false))
+			{
+				newAchievement.unlockedTexture = TSoftObjectPtr<UTexture2D>(FSoftObjectPath(UnlockedTex));
+			}
+    
+			if (UTexture2D* LockedTex = CreateTextureFromSteamIcon(IconHandle, AchievementName, LockedPath, true))
+			{
+				newAchievement.lockedTexture = TSoftObjectPtr<UTexture2D>(FSoftObjectPath(LockedTex));
+			}
+		}
+		else
+		{
+			UE_LOG(AchievementPlatformLog, Warning, TEXT("No valid icon for achievement: %s"), *FString(achievementID));
+		}
+
+		// Revert to original state
+		if (!bWasAchieved)
+		{
+			SteamUserStats()->ClearAchievement(achievementID);
+		}
+		
 		// Set platform data
 		newAchievement.platformData.steamAchievementID = FString(ANSI_TO_TCHAR(achievementID));
 		// stats cannot be downloaded with the achievement so these will have to be set manually
@@ -165,15 +330,18 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 		achievementsData.Add(FString(achievementID), newAchievement);
 
 		UE_LOG(AchievementPlatformLog, Log, TEXT("Added achievement: %s - %s"),
-			   *FString(achievementID), *newAchievement.displayName.ToString());
+		       *FString(achievementID), *newAchievement.displayName.ToString());
 	}
+	UE_LOG(AchievementPlatformLog, Log, TEXT("Successfully downloaded achievements"));
+	
 	return achievementsData;
 #else
 	return TMap<FString, FAchievementData>();
 #endif
 }
 
-bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatformData& achievementData, const float progress, const bool unlocked)
+bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatformData& achievementData,
+                                                         const float progress, const bool unlocked)
 {
 	if (GetPlatformInitialized())
 	{
@@ -184,7 +352,8 @@ bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatf
 		{
 			// Unlock the achievement
 			bSuccess = SteamUserStats()->SetAchievement(TCHAR_TO_ANSI(*achievementData.steamAchievementID));
-			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to unlock: %s"), *achievementData.steamAchievementID);
+			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to unlock: %s"),
+			       *achievementData.steamAchievementID);
 		}
 		else
 		{
@@ -192,19 +361,20 @@ bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatf
 			// we have to convert the type to the type Steam is expecting
 			switch (const auto& type = achievementData.uploadType)
 			{
-				case Float:
+			case Float:
 				{
 					// no need to cast, progress is already a float
 					bSuccess = SteamUserStats()->SetStat(TCHAR_TO_ANSI(*achievementData.steamStatID), progress);
 					break;
 				}
-				case Int32:
+			case Int32:
 				{
-					bSuccess = SteamUserStats()->SetStat(TCHAR_TO_ANSI(*achievementData.steamStatID), static_cast<int32>(progress));
+					bSuccess = SteamUserStats()->SetStat(
+						TCHAR_TO_ANSI(*achievementData.steamStatID), static_cast<int32>(progress));
 					break;
 				}
 
-				default:
+			default:
 				{
 					SteamUploadTypeNotSupported(type);
 					bSuccess = false;
@@ -215,11 +385,13 @@ bool SteamAchievementsClass::SetSteamAchievementProgress(const FAchievementPlatf
 		// Store changes to Steam
 		if (bSuccess)
 		{
-			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to update achievement stat: %s = %f"), *achievementData.steamAchievementID, progress);
+			UE_LOG(AchievementPlatformLog, Log, TEXT("Telling Steam to update achievement stat: %s = %f"),
+			       *achievementData.steamAchievementID, progress);
 			SteamUserStats()->StoreStats();
 		}
 		else
-			UE_LOG(AchievementPlatformLog, Error, TEXT("ERROR, SetStat/SetAchievevement returned false, could not update StoreStats()"));
+			UE_LOG(AchievementPlatformLog, Error,
+		       TEXT("ERROR, SetStat/SetAchievevement returned false, could not update StoreStats()"));
 
 		return bSuccess;
 #endif
@@ -257,7 +429,8 @@ bool SteamAchievementsClass::DeleteAllSteamAchievementProgress()
 
 			const auto& achievementName = platformData.steamAchievementID;
 			SteamUserStats()->ClearAchievement(TCHAR_TO_ANSI(*achievementName));
-			UE_LOG(AchievementPlatformLog, Log, TEXT("Attempting to delete achievement: '%s' on Steam"), *achievementName);
+			UE_LOG(AchievementPlatformLog, Log, TEXT("Attempting to delete achievement: '%s' on Steam"),
+			       *achievementName);
 
 			// if the achievement has any progress Stat, also set that to 0 (reset it)
 			const auto& statName = achievement.Value.platformData.steamStatID;
@@ -265,17 +438,17 @@ bool SteamAchievementsClass::DeleteAllSteamAchievementProgress()
 			{
 				switch (const auto& type = platformData.uploadType)
 				{
-					case Float:
+				case Float:
 					{
 						SteamUserStats()->SetStat(TCHAR_TO_ANSI(*statName), 0.f);
 						break;
 					}
-					case Int32:
+				case Int32:
 					{
 						SteamUserStats()->SetStat(TCHAR_TO_ANSI(*statName), 0);
 						break;
 					}
-					default:
+				default:
 					{
 						SteamUploadTypeNotSupported(type);
 						break;
@@ -299,11 +472,12 @@ bool& SteamAchievementsClass::GetPlatformInitialized()
 SteamCallbacksClass::SteamCallbacksClass()
 #if STEAMWORKS_INCLUDED
 	:
-m_CallbackUserStatsReceived(this, &SteamCallbacksClass::OnUserStatsReceived),
-m_CallbackUserStatsStored(this, &SteamCallbacksClass::OnUserStatsStored),
-m_CallbackAchievementStored(this, &SteamCallbacksClass::OnAchievementStored)
+	m_CallbackUserStatsReceived(this, &SteamCallbacksClass::OnUserStatsReceived),
+	m_CallbackUserStatsStored(this, &SteamCallbacksClass::OnUserStatsStored),
+	m_CallbackAchievementStored(this, &SteamCallbacksClass::OnAchievementStored)
 #endif
-{}
+{
+}
 
 #if STEAMWORKS_INCLUDED
 void SteamCallbacksClass::OnUserStatsReceived(UserStatsReceived_t* pCallback)
