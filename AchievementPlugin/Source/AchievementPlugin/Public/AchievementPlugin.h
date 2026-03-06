@@ -81,8 +81,7 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = "Save Slot Settings", meta = (DisplayName = "Default Save Slot Settings",
 			  Tooltip = "The defaults used for the saved profiles for achievementsData. Modifying this can cause old achievement progress to break"))
 	FSaveSlotSettings defaultSaveSlotSettings = FSaveSlotSettings();
-
-	// Note: has to be a TMap, TArray gave issues when modifying it in C++ and then trying to save it
+	
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Achievements", meta = (DisplayName = "AchievementsData",
 			  ToolTip = "Key: Name used for modifying achievementsData in Blueprint Nodes, Value: Achievement settings"))
 	TMap<FString, FAchievementData> achievementsData;
@@ -91,12 +90,20 @@ public:
 			  ToolTip = "If enabled, will delete any achievement progress for achievements that no longer exist"))
 	bool bCleanupAchievements = true;
 
-	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement Widget Settings", meta = (DisplayName = "Achievement Widget Settings"))
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|Widget Settings", meta = (DisplayName = "Achievement Widget Settings"))
 	FAchievementWidgetSettings achievementWidgetSettings;
 	
-	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Achievement UI Settings", meta = (DisplayName = "Achievement List Widget",
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|List|Achievement List Settings", meta = (DisplayName = "Use Achievement List",
+			  ToolTip = "Whether the Achievement List should be usable"))
+	bool useAchievementList = true;
+	
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|List|Achievement List Settings", meta = (DisplayName = "Achievement List Widget",
 			  ToolTip = "The achievement List widget used for the custom achievement list."))
-	TSubclassOf<UAchievementListWidget> achievementListWidget = nullptr;
+	TSubclassOf<UAchievementListWidget> achievementListWidgetDefault = nullptr;
+	
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|List|Achievement List Settings", meta = (DisplayName = "Default List Filter",
+			  ToolTip = "The Default Filter to apply to the Achievement List"))
+	FAchievementFilterSettings defaultAchievementListFilter;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Load/Update Runtime Stats",

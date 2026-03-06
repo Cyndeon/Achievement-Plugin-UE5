@@ -58,7 +58,9 @@ public:
 	bool ShowAchievementList() const;
 	bool HideAchievementList() const;
 	bool ForceUpdateAchievementList() const;
-	bool ChangeAchievementListFilters(const FAchievementFilterSettings& filter);
+	bool ChangeAchievementListFilters(const FAchievementFilterSettings& filter) const;
+	FAchievementFilterSettings* GetCurrentAchievementFilterSettings() const;
+	bool SetSearchText(const FString& text) const;
 	
 // Overrides
 	virtual void Tick(float deltaTime) override;

@@ -253,10 +253,9 @@ void UAchievementPluginSettings::PostInitProperties()
 	{
 		UE_LOG(AchievementLog, Warning, TEXT("Achievement Widget/Popup is not set, using default widget"));
 
-		FSoftClassPath widgetPath(TEXT("/AchievementPlugin/BPW_AchievementPopup.BPW_AchievementPopup_C"));
-		TSubclassOf<UUserWidget> widgetClass = widgetPath.TryLoadClass<UUserWidget>();
+		const FSoftClassPath widgetPath(TEXT("/AchievementPlugin/BPW_AchievementPopup.BPW_AchievementPopup_C"));
 
-		if (widgetClass)
+		if (const TSubclassOf<UUserWidget> widgetClass = widgetPath.TryLoadClass<UUserWidget>())
 		{
 			achievementWidgetSettings.achievementWidget = widgetClass;
 			UE_LOG(AchievementLog, Log, TEXT("Successfully set the default Achievement widget"));
@@ -265,6 +264,24 @@ void UAchievementPluginSettings::PostInitProperties()
 		else
 		{
 			UE_LOG(AchievementLog, Error, TEXT("Failed to load default achievement widget"));
+		}
+	}
+	
+	if (achievementListWidgetDefault == nullptr)
+	{
+		UE_LOG(AchievementLog, Warning, TEXT("Achievement List Widget Default is not set, using default List Widget"));
+
+		const FSoftClassPath widgetPath(TEXT("/AchievementPlugin/BPW_AchievementList.BPW_AchievementList_C"));
+
+		if (const TSubclassOf<UUserWidget> widgetClass = widgetPath.TryLoadClass<UUserWidget>())
+		{
+			achievementListWidgetDefault = widgetClass;
+			UE_LOG(AchievementLog, Log, TEXT("Successfully set the default Achievement list widget"));
+			AttemptSave();
+		}
+		else
+		{
+			UE_LOG(AchievementLog, Error, TEXT("Failed to load default achievement list widget"));
 		}
 	}
 

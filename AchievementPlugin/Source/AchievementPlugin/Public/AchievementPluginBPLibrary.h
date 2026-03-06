@@ -71,6 +71,7 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Remove Achievement Widget", Keywords = "Achievement Widget Remove"), Category = "AchievementPlugin")
 	static void RemoveAchievementWidget();
 	
+	// achievement list functions
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Create Achievement List Widget", Keywords = "Create Achievement List Widget"), Category = "AchievementPlugin")
 	static bool CreateAchievementList();
 	
@@ -81,7 +82,20 @@ public:
 	static bool HideAchievementList();
 	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Change Filter For Achievement List Widget", Keywords = "Change Filter Achievement List Widget"), Category = "AchievementPlugin")
-	static bool ChangeAchievementListFilter(FAchievementFilterSettings filter);
+	static bool SetAchievementListFilter(FAchievementFilterSettings filter);
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Filter For Achievement List Widget", Keywords = "Get Filter Achievement List Widget"), Category = "AchievementPlugin")
+	static FAchievementFilterSettings GetAchievementFilter();
+	
+	// general helper functions
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Default Filter For Achievement List Widget", Keywords = "Get Default Filter Achievement List Widget"), Category = "AchievementPlugin")
+	static FAchievementFilterSettings GetDefaultAchievementFilter();
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Format Number With Suffix", Keywords = "Format Number With Suffix"), Category = "AchievementPlugin")
+	static FString FormatNumberWithSuffix(float Value);
+	
+	UFUNCTION(BlueprintCallable, Category = "Achievement UI", meta = (DisplayName = "Set Search Text", Keywords = "Search Filter Achievement"))
+	static bool SetSearchTextInFilter(FString text);
 };
 
 

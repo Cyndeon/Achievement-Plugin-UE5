@@ -45,7 +45,8 @@ UAchievementUIManager* UAchievementUIManager::Get()
 	return m_cachedWorld->GetSubsystem<UAchievementUIManager>();
 }
 
-void UAchievementUIManager::QueuePopup(const FText& name, const TSoftObjectPtr<UTexture2D>& icon, const float progress = 0.f)
+void UAchievementUIManager::QueuePopup(const FText& name, const TSoftObjectPtr<UTexture2D>& icon,
+                                       const float progress = 0.f)
 {
 	const FName achievementName = FName(*name.ToString());
 	if (!FMath::IsNearlyZero(progress))
@@ -66,16 +67,23 @@ void UAchievementUIManager::QueuePopup(const FText& name, const TSoftObjectPtr<U
 bool UAchievementUIManager::CreateAchievementList()
 {
 	const auto settings = UAchievementPluginSettings::Get();
-	if (settings->achievementListWidget)
+	if (settings->useAchievementList)
 	{
-		AchievementListWidget = CreateWidget<UAchievementListWidget>(GetWorld(), settings->achievementListWidget);
-		if (AchievementListWidget)
+		if (settings->achievementListWidgetDefault)
 		{
-			AchievementListWidget->AddToViewport();
-			AchievementListWidget->SetVisibility(ESlateVisibility::Collapsed);
-			AchievementListWidget->PopulateList();
-			return true;
+			AchievementListWidget = CreateWidget<UAchievementListWidget>(GetWorld(), settings->achievementListWidgetDefault);
+			if (AchievementListWidget)
+			{
+				AchievementListWidget->AddToViewport();
+				AchievementListWidget->SetVisibility(ESlateVisibility::Collapsed);
+				AchievementListWidget->PopulateList();
+				
+				AchievementListWidget->ApplyFilter(settings->defaultAchievementListFilter);
+				return true;
+			}
+			else UE_LOG(AchievementUILog, Error, TEXT("Achievement List Widget could not be created"));
 		}
+		else UE_LOG(AchievementUILog, Error, TEXT("Achievement List was not set"));
 	}
 	return false;
 }
@@ -111,7 +119,7 @@ bool UAchievementUIManager::ForceUpdateAchievementList() const
 	return false;
 }
 
-bool UAchievementUIManager::ChangeAchievementListFilters(const FAchievementFilterSettings& filter)
+bool UAchievementUIManager::ChangeAchievementListFilters(const FAchievementFilterSettings& filter) const
 {
 	if (AchievementListWidget)
 	{
@@ -121,23 +129,45 @@ bool UAchievementUIManager::ChangeAchievementListFilters(const FAchievementFilte
 	return false;
 }
 
+FAchievementFilterSettings* UAchievementUIManager::GetCurrentAchievementFilterSettings() const
+{
+	if (AchievementListWidget)
+	{
+		return &AchievementListWidget->GetCurrentFilter();
+	}
+	UE_LOG(AchievementUILog, Error, TEXT("Couldn't Get Achievement List Widget nor the Filter!"));
+
+	return nullptr;
+}
+
+bool UAchievementUIManager::SetSearchText(const FString& text) const
+{
+	if (AchievementListWidget)
+	{
+		AchievementListWidget->SetSearchText(text);
+		return true;
+	}
+	return false;
+}
+
 void UAchievementUIManager::Tick(const float deltaTime)
 {
-		// progress cooldowns
-		if (m_progressCooldowns.Num() > 0)
+	// progress cooldowns
+	if (m_progressCooldowns.Num() > 0)
+	{
+		const auto& cooldownTime = UAchievementPluginSettings::Get()->achievementWidgetSettings.
+		                                                              delayBetweenSameProgressAchievementPopup;
+		// iterate through all elements, increase cooldown timer and remove if timer is more than or equal to the cooldown time
+		for (auto it = m_progressCooldowns.CreateIterator(); it; ++it)
 		{
-			const auto& cooldownTime = UAchievementPluginSettings::Get()->achievementWidgetSettings.delayBetweenSameProgressAchievementPopup;
-			// iterate through all elements, increase cooldown timer and remove if timer is more than or equal to the cooldown time
-			for (auto it = m_progressCooldowns.CreateIterator(); it; ++it)
-			{
-				it.Value() += deltaTime;
+			it.Value() += deltaTime;
 
-				if (it.Value() >= cooldownTime)
-				{
-					it.RemoveCurrent();
-				}
+			if (it.Value() >= cooldownTime)
+			{
+				it.RemoveCurrent();
 			}
 		}
+	}
 
 	if (m_queuedPopups.Num() > 0)
 	{
@@ -152,7 +182,8 @@ void UAchievementUIManager::Tick(const float deltaTime)
 
 			if (!widget)
 			{
-				UE_LOG(AchievementUILog, Error, TEXT("Something went wrong creating a Widget, please restart the engine if this occurs more!"));
+				UE_LOG(AchievementUILog, Error,
+				       TEXT("Something went wrong creating a Widget, please restart the engine if this occurs more!"));
 				return;
 			}
 
@@ -167,7 +198,10 @@ void UAchievementUIManager::Tick(const float deltaTime)
 				}
 				textBlock->SetText(data.name);
 			}
-			else UE_LOG(AchievementUILog, Warning, TEXT("Could not find TextBlock on Widget. Use the name AchievementName and set it to IsVariable!"));
+			else UE_LOG(AchievementUILog, Warning,
+			            TEXT(
+				            "Could not find TextBlock on Widget. Use the name AchievementName and set it to IsVariable!"
+			            ));
 			// find the image variable
 			if (auto* image = Cast<UImage>(widget->GetWidgetFromName(TEXT("AchievementImage"))))
 			{
@@ -177,7 +211,9 @@ void UAchievementUIManager::Tick(const float deltaTime)
 				}
 				else UE_LOG(AchievementUILog, Warning, TEXT("Popup didn't get a texture!"));
 			}
-			else UE_LOG(AchievementUILog, Warning, TEXT("Could not find Image on Widget. Use the name AchievementImage and set it to IsVariable!"));
+			else UE_LOG(AchievementUILog, Warning,
+			            TEXT("Could not find Image on Widget. Use the name AchievementImage and set it to IsVariable!"
+			            ));
 			// if progress is used, also enable progress bar
 			if (auto* progressBar = Cast<UProgressBar>(widget->GetWidgetFromName(TEXT("AchievementProgressBar"))))
 			{
@@ -191,9 +227,11 @@ void UAchievementUIManager::Tick(const float deltaTime)
 				{
 					progressBar->SetVisibility(ESlateVisibility::Collapsed);
 				}
-
 			}
-			else UE_LOG(AchievementUILog, Warning, TEXT("Could not find ProgressBar on Widget. Use the name AchievementProgressBar and set it to IsVariable!"));
+			else UE_LOG(AchievementUILog, Warning,
+			            TEXT(
+				            "Could not find ProgressBar on Widget. Use the name AchievementProgressBar and set it to IsVariable!"
+			            ));
 
 			widget->AddToViewport();
 

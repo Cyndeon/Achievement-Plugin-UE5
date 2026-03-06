@@ -23,6 +23,9 @@ struct FAchievementFilterSettings
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EAchievementSortMode SortMode = EAchievementSortMode::ProgressDescending;
+	
+	// only used for caching the search text
+	FString SearchText;
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool unlockedAtBottom = true;
@@ -35,12 +38,21 @@ struct FAchievementFilterSettings
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool hideHidden = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ToolTip = "Whether hidden achievements should be clickable to be revealed"))
+	bool clickableHidden = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ToolTip = "Whether to use Scientific Notation for all Progress and Goals. NOTE: When numbers get too high, they will default to Scientific Notation anyway!"))
+	bool useScientificNotation = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ToolTip = "How many decimals to use for progress", ClampMin = "0", ClampMax = "2"))
+	int32 decimalCount = 0;
 };
 
 class UListView;
 class UAchievementRowData;
 
-UCLASS()
+UCLASS(Abstract)
 class ACHIEVEMENTPLUGIN_API UAchievementListWidget : public UUserWidget
 {
 	GENERATED_BODY()
@@ -57,6 +69,12 @@ public:
 	
 	UFUNCTION()
 	void ApplyFilter(const FAchievementFilterSettings& NewFilter);
+	
+	UFUNCTION()
+	FAchievementFilterSettings& GetCurrentFilter() {return CurrentFilter;}
+	
+	UFUNCTION()
+	void SetSearchText(const FString& NewSearchText);
     
 private:
 	TArray<FString> GetFilteredAndSortedIds() const;
@@ -69,4 +87,12 @@ private:
 	
 	UPROPERTY()
 	FAchievementFilterSettings CurrentFilter;
+	
+	// timer for typing
+	FTimerHandle SearchDebounceTimer;
+
+	UPROPERTY()
+	FString PendingSearchText;
+	
+	float WaitTime = 0.2f;
 };

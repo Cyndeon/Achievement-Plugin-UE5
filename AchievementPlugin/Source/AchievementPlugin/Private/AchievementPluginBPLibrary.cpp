@@ -124,7 +124,6 @@ bool UAchievementPluginBPLibrary::DeleteAllAchievementProgress(const bool platfo
 void UAchievementPluginBPLibrary::SetActiveSaveSlotIndex(const int32 newIndex)
 {
 	GetManager()->GetSaveManager()->SetSaveSlotIndex(newIndex);
-	return;
 }
 
 void UAchievementPluginBPLibrary::RetroactivelyUpdateAchievementsOnPlatforms()
@@ -164,7 +163,139 @@ bool UAchievementPluginBPLibrary::HideAchievementList()
 	return UAchievementUIManager::Get()->HideAchievementList();
 }
 
-bool UAchievementPluginBPLibrary::ChangeAchievementListFilter(FAchievementFilterSettings filter)
+bool UAchievementPluginBPLibrary::SetAchievementListFilter(const FAchievementFilterSettings filter)
 {
 	return UAchievementUIManager::Get()->ChangeAchievementListFilters(filter);
+}
+
+FAchievementFilterSettings UAchievementPluginBPLibrary::GetAchievementFilter()
+{
+	if (const auto filter = UAchievementUIManager::Get()->GetCurrentAchievementFilterSettings())
+		return *filter;
+	return FAchievementFilterSettings();
+}
+
+FAchievementFilterSettings UAchievementPluginBPLibrary::GetDefaultAchievementFilter()
+{
+	if (const auto settings = UAchievementPluginSettings::Get())
+	{
+		return settings->defaultAchievementListFilter;
+	}
+	else return FAchievementFilterSettings();
+}
+
+FString UAchievementPluginBPLibrary::FormatNumberWithSuffix(const float Value)
+{
+	// if Value is too low, just return 0
+	if (FMath::IsNearlyZero(Value))
+	{
+		return TEXT("0");
+	}
+
+	const auto& filter = GetAchievementFilter();
+
+	// Below 1000 - show as-is regardless of notation setting
+	if (Value < 1000.0f)
+	{
+		if (FMath::Fmod(Value, 1.0) == 0.0)
+		{
+			return FString::Printf(TEXT("%lld"), FMath::FloorToInt64(Value));
+		}
+		return FString::Printf(TEXT("%.*f"), filter.decimalCount, Value);
+	}
+
+	// Scientific notation mode
+	if (filter.useScientificNotation)
+	{
+		const int32 Exponent = FMath::FloorToInt(FMath::LogX(10.0, Value));
+		const double Mantissa = Value / FMath::Pow(10.0, Exponent);
+
+		FString Result = FString::Printf(TEXT("%.*f"), filter.decimalCount, Mantissa);
+
+		// Remove trailing zeros
+		while (Result.EndsWith(TEXT("0")) && Result.Contains(TEXT(".")))
+		{
+			Result.LeftChopInline(1);
+		}
+		if (Result.EndsWith(TEXT(".")))
+		{
+			Result.LeftChopInline(1);
+		}
+
+		return FString::Printf(TEXT("%se%d"), *Result, Exponent);
+	}
+
+	// Named suffix mode
+	struct FSuffixInfo
+	{
+		double Threshold;
+		double Divisor;
+		const TCHAR* Suffix;
+	};
+
+	static const FSuffixInfo Suffixes[] =
+	{
+		{1e33, 1e33, TEXT("Dc")},
+		{1e30, 1e30, TEXT("No")},
+		{1e27, 1e27, TEXT("Oc")},
+		{1e24, 1e24, TEXT("Sp")},
+		{1e21, 1e21, TEXT("Sx")},
+		{1e18, 1e18, TEXT("Qi")},
+		{1e15, 1e15, TEXT("Qa")},
+		{1e12, 1e12, TEXT("T")},
+		{1e9, 1e9, TEXT("B")},
+		{1e6, 1e6, TEXT("M")},
+		{1e3, 1e3, TEXT("K")},
+	};
+
+	// Beyond our suffixes - fall back to scientific notation
+	if (Value >= 1e36)
+	{
+		const int32 Exponent = FMath::FloorToInt(FMath::LogX(10.0, Value));
+		const double Mantissa = Value / FMath::Pow(10.0, Exponent);
+
+		FString Result = FString::Printf(TEXT("%.*f"), filter.decimalCount, Mantissa);
+
+		while (Result.EndsWith(TEXT("0")) && Result.Contains(TEXT(".")))
+		{
+			Result.LeftChopInline(1);
+		}
+		if (Result.EndsWith(TEXT(".")))
+		{
+			Result.LeftChopInline(1);
+		}
+
+		return FString::Printf(TEXT("%se%d"), *Result, Exponent);
+	}
+
+	for (const FSuffixInfo& Info : Suffixes)
+	{
+		if (Value >= Info.Threshold)
+		{
+			const double Divided = Value / Info.Divisor;
+			FString Result = FString::Printf(TEXT("%.*f"), filter.decimalCount, Divided);
+
+			while (Result.EndsWith(TEXT("0")) && Result.Contains(TEXT(".")))
+			{
+				Result.LeftChopInline(1);
+			}
+			if (Result.EndsWith(TEXT(".")))
+			{
+				Result.LeftChopInline(1);
+			}
+
+			return Result + Info.Suffix;
+		}
+	}
+
+	return FString::Printf(TEXT("%.*f"), filter.decimalCount, Value);
+}
+
+bool UAchievementPluginBPLibrary::SetSearchTextInFilter(FString text)
+{
+	if (const auto* UIManager = UAchievementUIManager::Get())
+	{
+		return UIManager->SetSearchText(text);
+	}
+	return false;
 }

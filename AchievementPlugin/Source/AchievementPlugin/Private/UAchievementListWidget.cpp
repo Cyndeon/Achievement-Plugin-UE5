@@ -47,6 +47,32 @@ void UAchievementListWidget::ApplyFilter(const FAchievementFilterSettings& NewFi
 	PopulateList();
 }
 
+void UAchievementListWidget::SetSearchText(const FString& NewSearchText)
+{
+    PendingSearchText = NewSearchText;
+    
+    // Clear existing timer
+    if (const UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(SearchDebounceTimer);
+        
+        // Wait x seconds before actually searching
+        World->GetTimerManager().SetTimer(
+            SearchDebounceTimer,
+            [this]()
+            {
+                if (CurrentFilter.SearchText != PendingSearchText)
+                {
+                    CurrentFilter.SearchText = PendingSearchText;
+                    PopulateList();
+                }
+            },
+            WaitTime,
+            false
+        );
+    }
+}
+
 TArray<FString> UAchievementListWidget::GetFilteredAndSortedIds() const
 {
     TArray<FString> Result;
@@ -63,6 +89,10 @@ TArray<FString> UAchievementListWidget::GetFilteredAndSortedIds() const
         return Result;
     }
     
+    // Prepare search text (lowercase for case-insensitive search)
+    const FString searchLower = CurrentFilter.SearchText.ToLower().TrimStartAndEnd();
+    const bool hasSearch = !searchLower.IsEmpty();
+    
     // Gather and filter
     for (const auto& Pair : Settings->achievementsData)
     {
@@ -72,11 +102,24 @@ TArray<FString> UAchievementListWidget::GetFilteredAndSortedIds() const
         const auto LinkId = Data.GetLinkID();
         const FAchievementProgress* Progress = Subsystem->GetAchievementProgressByLinkId(LinkId);
 
-        const bool unlocked = Progress->IsUnlockedLocally();
+        const bool bUnlocked = Progress && Progress->progress >= Data.progressGoal;
         
-        if (CurrentFilter.hideUnlocked && unlocked) continue;
-        if (CurrentFilter.hideLocked && !unlocked) continue;
+        // Apply visibility filters
+        if (CurrentFilter.hideUnlocked && bUnlocked) continue;
+        if (CurrentFilter.hideLocked && !bUnlocked) continue;
         if (CurrentFilter.hideHidden && Data.isHidden) continue;
+        
+        // Apply search filter
+        if (hasSearch)
+        {
+            const FString NameLower = Data.displayName.ToString().ToLower();
+            const FString DescLower = Data.description.ToString().ToLower();
+            
+            if (!NameLower.Contains(searchLower) && !DescLower.Contains(searchLower))
+            {
+                continue;
+            }
+        }
         
         Result.Add(Id);
     }
