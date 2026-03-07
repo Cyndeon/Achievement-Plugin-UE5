@@ -88,7 +88,7 @@ public:
 	static FAchievementFilterSettings GetAchievementFilter();
 	
 	// general helper functions
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Default Filter For Achievement List Widget", Keywords = "Get Default Filter Achievement List Widget"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Default Filter For Achievement List Widget", Keywords = "Get Current Default Filter Achievement List Widget"), Category = "AchievementPlugin")
 	static FAchievementFilterSettings GetDefaultAchievementFilter();
 	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Format Number With Suffix", Keywords = "Format Number With Suffix"), Category = "AchievementPlugin")

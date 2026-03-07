@@ -172,6 +172,7 @@ FAchievementFilterSettings UAchievementPluginBPLibrary::GetAchievementFilter()
 {
 	if (const auto filter = UAchievementUIManager::Get()->GetCurrentAchievementFilterSettings())
 		return *filter;
+	UE_LOG(AchievementLog, Warning, TEXT("Filter could not be gotten, returning empty one"));
 	return FAchievementFilterSettings();
 }
 
