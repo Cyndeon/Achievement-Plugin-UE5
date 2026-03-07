@@ -32,6 +32,11 @@ void FAchievementPluginModule::ShutdownModule()
 	}
 }
 
+bool UAchievementPluginSettings::IsPlatformInitialized() const
+{
+	return UAchievementPlatformsClass::achievementPlatformInitialized;
+}
+
 int32 UAchievementPluginSettings::GetLinkIDByAchievementID(const FString& achievementId)
 {
 	// check if the achievement name exists

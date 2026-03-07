@@ -52,7 +52,9 @@ class ACHIEVEMENTPLUGIN_API UAchievementPluginSettings : public UObject
 	{
 		return m_achievementPlatform == EAchievementPlatforms::EOS;
 	}
-
+	UFUNCTION()
+	bool IsPlatformInitialized() const;
+	
 public:
 	UAchievementPluginSettings() = default;
 	static UAchievementPluginSettings* Get()
@@ -154,11 +156,11 @@ private:
 			  Tooltip = "This will Initialize and Deinitialize the platform's API, disable this if you want to set it up yourself! If setting up manually, make sure to also call AchievementPlatformInitialized in your level blueprint!"))
 	bool m_initializePlatform = true;
 
-	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Steam App ID", EditCondition = "IsSteamPlatform", EditConditionHides))
+	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "Steam App ID (CANNOT BE SET AFTER STEAM HAS INITIALIZED!)", EditCondition = "IsSteamPlatform && !IsPlatformInitialized", EditConditionHides))
 	int32 m_steamAppID = 480;
-
+	
 	// EOS
-	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "EOS Info", EditCondition = "IsEpicPlatform", EditConditionHides))
+	UPROPERTY(EditAnywhere, config, Category = "Platform Settings", meta = (DisplayName = "EOS Info (CANNOT BE SET AFTER EOS HAS INITIALIZED!)", EditCondition = "IsEpicPlatform && !IsPlatformInitialized", EditConditionHides))
 	FEpicGamesInfo m_EOSInfo;
 };
 

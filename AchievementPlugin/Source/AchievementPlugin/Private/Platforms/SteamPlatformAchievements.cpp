@@ -80,7 +80,7 @@ UTexture2D* CreateTextureFromSteamIcon(const int32 IconHandle, const FString& Te
 
 	Texture->PostEditChange();
 	Texture->MarkPackageDirty();
-	
+
 	FAssetRegistryModule::AssetCreated(Texture);
 
 	const FString PackageFilename = FPackageName::LongPackageNameToFilename(
@@ -99,17 +99,17 @@ UTexture2D* CreateTextureFromSteamIcon(const int32 IconHandle, const FString& Te
 
 void CleanAndCreateIconFolders(const FString& GamePath)
 {
-	const FString RelativePath = GamePath.StartsWith(TEXT("/Game/")) 
-		? GamePath.RightChop(6) 
-		: GamePath;
+	const FString RelativePath = GamePath.StartsWith(TEXT("/Game/"))
+		                             ? GamePath.RightChop(6)
+		                             : GamePath;
 	const FString AbsolutePath = FPaths::ProjectContentDir() / RelativePath;
-    
+
 	// delete old folder
 	if (IFileManager::Get().DirectoryExists(*AbsolutePath))
 	{
 		IFileManager::Get().DeleteDirectory(*AbsolutePath, false, true);
 	}
-    
+
 	// Create new structure
 	IFileManager::Get().MakeDirectory(*(AbsolutePath / TEXT("UnlockedTextures")), true);
 	IFileManager::Get().MakeDirectory(*(AbsolutePath / TEXT("LockedTextures")), true);
@@ -238,6 +238,15 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 		return TMap<FString, FAchievementData>();
 	}
 #if STEAMWORKS_INCLUDED
+	const ISteamUserStats* UserStats = SteamUserStats();
+	const ISteamUtils* Utils = SteamUtils();
+
+	if (!UserStats || !Utils)
+	{
+		UE_LOG(AchievementPlatformLog, Error,
+		       TEXT("Steam interfaces are null - try restarting the editor with Steam running"));
+		return TMap<FString, FAchievementData>();
+	}
 
 	const uint32 numAchievements = SteamUserStats()->GetNumAchievements();
 	UE_LOG(AchievementPlatformLog, Log, TEXT("Found %d Steam achievements"), numAchievements);
@@ -250,7 +259,7 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 	// todo make function to get paths
 	const FString UnlockedPath = IconsPath + "/UnlockedTextures";
 	const FString LockedPath = IconsPath + "/LockedTextures";
-	
+
 	CleanAndCreateIconFolders(IconsPath);
 	// using uint32 since Steam api expects that
 	for (uint32 i = 0; i < numAchievements; ++i)
@@ -267,7 +276,7 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 			SteamUserStats()->GetAchievementDisplayAttribute(achievementID, "name"));
 		newAchievement.description = FText::FromString(
 			SteamUserStats()->GetAchievementDisplayAttribute(achievementID, "desc"));
-		
+
 		// Get current state first
 		bool bWasAchieved = false;
 		SteamUserStats()->GetAchievement(achievementID, &bWasAchieved);
@@ -281,7 +290,7 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 		// Get the colored icon
 		const int32 IconHandle = SteamUserStats()->GetAchievementIcon(achievementID);
 		// make sure the icon exists
-		
+
 		bool bValidIcon = false;
 		if (IconHandle != 0)
 		{
@@ -297,12 +306,12 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 		if (bValidIcon)
 		{
 			const FString AchievementName = FString(ANSI_TO_TCHAR(achievementID));
-    
+
 			if (UTexture2D* UnlockedTex = CreateTextureFromSteamIcon(IconHandle, AchievementName, UnlockedPath, false))
 			{
 				newAchievement.unlockedTexture = TSoftObjectPtr<UTexture2D>(FSoftObjectPath(UnlockedTex));
 			}
-    
+
 			if (UTexture2D* LockedTex = CreateTextureFromSteamIcon(IconHandle, AchievementName, LockedPath, true))
 			{
 				newAchievement.lockedTexture = TSoftObjectPtr<UTexture2D>(FSoftObjectPath(LockedTex));
@@ -318,7 +327,7 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 		{
 			SteamUserStats()->ClearAchievement(achievementID);
 		}
-		
+
 		// Set platform data
 		newAchievement.platformData.steamAchievementID = FString(ANSI_TO_TCHAR(achievementID));
 		// stats cannot be downloaded with the achievement so these will have to be set manually
@@ -333,7 +342,7 @@ TMap<FString, FAchievementData> SteamAchievementsClass::GetSteamAchievementsAsAc
 		       *FString(achievementID), *newAchievement.displayName.ToString());
 	}
 	UE_LOG(AchievementPlatformLog, Log, TEXT("Successfully downloaded achievements"));
-	
+
 	return achievementsData;
 #else
 	return TMap<FString, FAchievementData>();
