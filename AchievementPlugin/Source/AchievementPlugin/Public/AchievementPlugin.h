@@ -92,7 +92,7 @@ public:
 			  ToolTip = "If enabled, will delete any achievement progress for achievements that no longer exist"))
 	bool bCleanupAchievements = true;
 
-	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|Widget Settings", meta = (DisplayName = "Achievement Widget Settings"))
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|Popup", meta = (DisplayName = "Achievement Widget Settings"))
 	FAchievementWidgetSettings achievementWidgetSettings;
 	
 	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|List|Achievement List Settings", meta = (DisplayName = "Use Achievement List",
