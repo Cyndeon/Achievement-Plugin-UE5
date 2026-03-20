@@ -50,7 +50,7 @@ public:
 	static bool LoadAchievementProgress();
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete Single Achievement Progress", Keywords = "Delete Single Achievement Progress",
-			  Tooltip = "Delete's given achievement's progress. This cannot be undone!"), Category = "AchievementPlugin")
+			  Tooltip = "Deletes given achievement's progress. This cannot be undone!"), Category = "AchievementPlugin")
 	static bool DeleteSingleAchievementProgress(const FString& achievementID, bool platformsToo = true);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete All Achievement Progress", Keywords = "Delete Achievement Progress",
