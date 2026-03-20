@@ -62,7 +62,7 @@ struct FAchievementFilterSettings
 	bool useScientificNotation = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,
-		meta = (ToolTip = "How many decimals to use for progress", ClampMin = "0", ClampMax = "2"))
+		meta = (ToolTip = "How many decimals to use for progress [MAX 2]", ClampMin = "0", ClampMax = "2"))
 	int32 decimalCount = 0;
 };
 
