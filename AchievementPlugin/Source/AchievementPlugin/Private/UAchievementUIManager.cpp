@@ -66,6 +66,12 @@ void UAchievementUIManager::QueuePopup(const FText& name, const TSoftObjectPtr<U
 
 bool UAchievementUIManager::CreateAchievementList()
 {
+	if (AchievementListWidget)
+	{
+		UE_LOG(AchievementUILog, Warning, TEXT("Achievement List Widget was already created!"));
+		return false;
+	}
+	
 	const auto settings = UAchievementPluginSettings::Get();
 	if (settings->useAchievementList)
 	{

@@ -25,15 +25,15 @@ public:
 		float change);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Unlocked Status", Keywords = "Get Achievement unlocked Status"), Category = "AchievementPlugin")
-	static bool GetAchievementUnlockedStatus();
+	static bool GetAchievementUnlockedStatus(FString& localAchievementId);
 	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Data", Keywords = "Get Achievement Data",
 			Tooltip = "Returns a copy of the achievement using the achievementId"), Category = "AchievementPlugin")
-	static FAchievementData GetAchievementData(const FString& achievementId);
+	static FAchievementData GetAchievementData(const FString& localAchievementId);
 	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Progress By Id", Keywords = "Get Achievement Progress By Id",
 			Tooltip = "Returns a copy of the progress for the given achievement's Id"), Category = "AchievementPlugin")
-	static FAchievementProgress GetAchievementProgressById(const FString& achievementId);
+	static FAchievementProgress GetAchievementProgressById(const FString& localAchievementId);
 	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Progress By Data", Keywords = "Get Achievement Progress By Data", 
 			Tooltip = "Returns a copy of the progress for the given achievement"), Category = "AchievementPlugin")
@@ -51,7 +51,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete Single Achievement Progress", Keywords = "Delete Single Achievement Progress",
 			  Tooltip = "Deletes given achievement's progress. This cannot be undone!"), Category = "AchievementPlugin")
-	static bool DeleteSingleAchievementProgress(const FString& achievementID, bool platformsToo = true);
+	static bool DeleteSingleAchievementProgress(const FString& localAchievementID, bool platformsToo = true);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete All Achievement Progress", Keywords = "Delete Achievement Progress",
 			  Tooltip="Delete's ALL achievements progress. Will empty all progress but keep the file. This cannot be undone!"), Category = "AchievementPlugin")

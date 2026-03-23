@@ -24,72 +24,87 @@ UAchievementManagerSubSystem* GetManager()
 	{
 		return manager;
 	}
-	UE_LOG(AchievementLog, Fatal, TEXT("FATAL: UAchievementPluginSettings returns a nullptr!"));
+	UE_LOG(AchievementLog, Error, TEXT("UAchievementPluginSettings returns a nullptr!"));
 	return nullptr;
+}
+
+template <typename Func>
+// ReSharper disable once CppNotAllPathsReturnValue
+auto WithManager(Func&& Action) -> decltype(Action(std::declval<UAchievementManagerSubSystem*>()))
+{
+	if (auto* M = GetManager())
+	{
+		if constexpr (std::is_void_v<decltype(Action(M))>)
+		{
+			Action(M);
+			return;
+		}
+		else
+		{
+			return Action(M);
+		}
+	}
+	if constexpr (!std::is_void_v<decltype(Action(std::declval<UAchievementManagerSubSystem*>()))>)
+	{
+		return {};
+	}
 }
 
 bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& localAchievementId, const float change)
 {
-	return GetManager()->IncreaseAchievementProgress(localAchievementId, change);
+	return WithManager([&](auto* M) { return M->IncreaseAchievementProgress(localAchievementId, change); });
 }
 
-bool UAchievementPluginBPLibrary::GetAchievementUnlockedStatus()
+bool UAchievementPluginBPLibrary::GetAchievementUnlockedStatus(FString& localAchievementId)
 {
-	return true;
+	return WithManager([&](auto* M) { return M->GetAchievementProgress(localAchievementId).IsUnlockedLocally(); });
 }
 
-FAchievementData UAchievementPluginBPLibrary::GetAchievementData(const FString& achievementId)
+FAchievementData UAchievementPluginBPLibrary::GetAchievementData(const FString& localAchievementId)
 {
-	return GetManager()->GetAchievementData(achievementId);
+	return WithManager([&](auto* M) { return M->GetAchievementData(localAchievementId); });
 }
 
-FAchievementProgress UAchievementPluginBPLibrary::GetAchievementProgressById(const FString& achievementId)
+FAchievementProgress UAchievementPluginBPLibrary::GetAchievementProgressById(const FString& localAchievementId)
 {
-	return GetManager()->GetAchievementProgress(achievementId);
+	return WithManager([&](auto* M) { return M->GetAchievementProgress(localAchievementId); });
 }
 
 FAchievementProgress UAchievementPluginBPLibrary::GetAchievementProgressByData(const FAchievementData& achievementData)
 {
-	return GetManager()->GetAchievementProgress(achievementData);
+	return WithManager([&](auto* M) { return M->GetAchievementProgress(achievementData); });
 }
 
 bool UAchievementPluginBPLibrary::SaveAchievementProgressAsync()
 {
-	const auto* manager = GetManager();
-	return GetManager()->GetSaveManager()->SaveProgressAsync(manager->achievementsProgress);
+	return WithManager([&](auto* M) { return M->GetSaveManager()->SaveProgressAsync(M->achievementsProgress); });
 }
 
 bool UAchievementPluginBPLibrary::SaveAchievementProgress()
 {
-	const auto* manager = GetManager();
-	return manager->GetSaveManager()->SaveProgress(manager->achievementsProgress);
+	return WithManager([&](auto* M) { return M->GetSaveManager()->SaveProgress(M->achievementsProgress); });
 }
 
 bool UAchievementPluginBPLibrary::LoadAchievementProgress()
 {
-	auto* manager = GetManager();
-	manager->achievementsProgress = manager->GetSaveManager()->LoadProgress();
-
-	// remove any deleted achievements
-	manager->CleanupAchievements();
-
-	// add achievement progress for any new achievements that weren't there before
-	manager->InitializeAchievements();
-
-	return true;
+	return WithManager([](auto* M)
+	{
+		M->achievementsProgress = M->GetSaveManager()->LoadProgress();
+		M->CleanupAchievements();
+		M->InitializeAchievements();
+		return true;
+	});
 }
 
-bool UAchievementPluginBPLibrary::DeleteSingleAchievementProgress(const FString& achievementID, bool platformsToo)
+bool UAchievementPluginBPLibrary::DeleteSingleAchievementProgress(const FString& localAchievementID, bool platformsToo)
 {
-	if (auto* manager = GetManager())
+	return WithManager([&](auto* M)
 	{
-		const auto linkID = UAchievementPluginSettings::Get()->GetLinkIDByAchievementID(achievementID);
-		if (manager->achievementsProgress.Find(linkID))
+		const auto linkID = UAchievementPluginSettings::Get()->GetLinkIDByAchievementID(localAchievementID);
+		if (M->achievementsProgress.Find(linkID))
 		{
-			// set the element to be empty
-			manager->achievementsProgress[linkID] = FAchievementProgress();
-
-			UE_LOG(AchievementLog, Log, TEXT("Reset achievement progress for '%s'"), *achievementID);
+			M->achievementsProgress[linkID] = FAchievementProgress();
+			UE_LOG(AchievementLog, Log, TEXT("Reset achievement progress for '%s'"), *localAchievementID);
 			return true;
 		}
 		UE_LOG(AchievementLog, Error, TEXT("Could not find achievement progress for the Link ID '%d'"), linkID);
@@ -97,33 +112,30 @@ bool UAchievementPluginBPLibrary::DeleteSingleAchievementProgress(const FString&
 		if (platformsToo)
 			UAchievementPlatformsClass::Get()->PlatformDeleteAllAchievementProgress();
 		return false;
-	}
-	return false;
+	});
 }
 
 bool UAchievementPluginBPLibrary::DeleteAllAchievementProgress(const bool platformsToo)
 {
-	if (auto* manager = GetManager())
+	return WithManager([&](auto* M)
 	{
-		auto& progress = manager->achievementsProgress;
+		auto& progress = M->achievementsProgress;
 		const int32 deletedCount = progress.Num();
 
 		progress.Empty();
-		manager->InitializeAchievements();
+		M->InitializeAchievements();
 
 		UE_LOG(AchievementLog, Log, TEXT("Deleted all achievement progress for' %d' entries"), deletedCount);
 
-		// delete on non-local platform too if true
 		if (platformsToo)
 			UAchievementPlatformsClass::Get()->PlatformDeleteAllAchievementProgress();
 		return true;
-	}
-	return false;
+	});
 }
 
 void UAchievementPluginBPLibrary::SetActiveSaveSlotIndex(const int32 newIndex)
 {
-	GetManager()->GetSaveManager()->SetSaveSlotIndex(newIndex);
+	return WithManager([&](auto* M) { M->GetSaveManager()->SetSaveSlotIndex(newIndex); });
 }
 
 void UAchievementPluginBPLibrary::RetroactivelyUpdateAchievementsOnPlatforms()
@@ -145,7 +157,7 @@ void UAchievementPluginBPLibrary::AchievementPlatformInitialized(const EAchievem
 
 void UAchievementPluginBPLibrary::RemoveAchievementWidget()
 {
-	GetManager()->DeleteAchievementPopup();
+	WithManager([&](auto* M) {M->DeleteAchievementPopup();});
 }
 
 bool UAchievementPluginBPLibrary::CreateAchievementList()
@@ -182,7 +194,7 @@ FAchievementFilterSettings UAchievementPluginBPLibrary::GetDefaultAchievementFil
 	{
 		return settings->defaultAchievementListFilter;
 	}
-	else return FAchievementFilterSettings();
+	return FAchievementFilterSettings();
 }
 
 FString UAchievementPluginBPLibrary::FormatNumberWithSuffix(const float Value)
