@@ -30,20 +30,20 @@ public:
 		const FString& localAchievementId,
 		float change);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "Get Achievement Unlocked Status", Keywords = "Get Achievement unlocked Status"), 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Unlocked Status", Keywords = "Get Achievement unlocked Status"), 
 		Category = "AchievementPlugin|Achievement Progress")
-	static bool GetAchievementUnlockedStatus(FString& localAchievementId);
+	static bool GetAchievementUnlockedStatus(const FString& localAchievementId);
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "Get Achievement Data", Keywords = "Get Achievement Data",
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Data", Keywords = "Get Achievement Data",
 			Tooltip = "Returns a copy of the achievement using the achievementId"), 
 			Category = "AchievementPlugin|Achievement Data")
 	static FAchievementData GetAchievementData(const FString& localAchievementId);
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "Get Achievement Progress By Id", Keywords = "Get Achievement Progress By Id",
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Progress By Id", Keywords = "Get Achievement Progress By Id",
 			Tooltip = "Returns a copy of the progress for the given achievement's Id"), Category = "AchievementPlugin|Achievement Progress")
 	static FAchievementProgress GetAchievementProgressById(const FString& localAchievementId);
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "Get Achievement Progress By Data", Keywords = "Get Achievement Progress By Data", 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Progress By Data", Keywords = "Get Achievement Progress By Data", 
 			Tooltip = "Returns a copy of the progress for the given achievement"), Category = "AchievementPlugin|Achievement Progress")
 	static FAchievementProgress GetAchievementProgressByData(const FAchievementData& achievementData);
 	
@@ -106,7 +106,7 @@ public:
 	static FAchievementFilterSettings GetDefaultAchievementFilter();
 	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Search Text", Keywords = "Search Filter Achievement"), Category = "AchievementPlugin|Achievement List")
-	static bool SetSearchTextInFilter(FString text);
+	static bool SetSearchTextInFilter(const FString& text);
 	
 	// general helper functions
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "Format Number With Suffix", Keywords = "Format Number With Suffix"), Category = "AchievementPlugin|Achievement List")

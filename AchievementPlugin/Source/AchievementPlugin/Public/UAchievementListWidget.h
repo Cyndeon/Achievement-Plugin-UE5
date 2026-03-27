@@ -58,13 +58,13 @@ struct FAchievementFilterSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,
 		meta = (ToolTip =
-			"Whether to use Scientific Notation for all Progress and Goals. NOTE: When numbers get too high, they will default to Scientific Notation anyway!"
+			"Whether to use Scientific Notation for all Progress and Goals."
 		), Category = "Achievement List Filter")
 	bool useScientificNotation = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,
 		meta = (ToolTip = "How many decimals to use for progress [MAX 2]", ClampMin = "0", ClampMax = "2"), Category = "Achievement List Filter")
-	int32 decimalCount = 0;
+	int32 decimalCount = 2;
 };
 
 class UListView;

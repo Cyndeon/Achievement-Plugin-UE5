@@ -62,7 +62,7 @@ bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& loc
 	return WithManager([&](auto* M) { return M->IncreaseAchievementProgress(localAchievementId, change); });
 }
 
-bool UAchievementPluginBPLibrary::GetAchievementUnlockedStatus(FString& localAchievementId)
+bool UAchievementPluginBPLibrary::GetAchievementUnlockedStatus(const FString& localAchievementId)
 {
 	return WithManager([&](auto* M) { return M->GetAchievementProgress(localAchievementId).IsUnlockedLocally(); });
 }
@@ -316,7 +316,7 @@ FString UAchievementPluginBPLibrary::FormatNumberWithSuffix(const float Value)
 	return FString::Printf(TEXT("%.*f"), filter.decimalCount, Value);
 }
 
-bool UAchievementPluginBPLibrary::SetSearchTextInFilter(FString text)
+bool UAchievementPluginBPLibrary::SetSearchTextInFilter(const FString& text)
 {
 	if (const auto* UIManager = UAchievementUIManager::Get())
 	{
