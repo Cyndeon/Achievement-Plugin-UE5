@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// Copyright 2025 Justin Comans. All rights reserved.         ||
 // -------------------------------------------------------------
 
 #pragma once
@@ -8,6 +8,7 @@
 #if STEAMWORKS_INCLUDED
 #include "../ThirdParty/Steamworks/sdk/public/steam/steam_api.h"
 #endif
+#include "HAL/FileManager.h"
 
 class SteamCallbacksClass;
 class ACHIEVEMENTPLUGIN_API SteamAchievementsClass

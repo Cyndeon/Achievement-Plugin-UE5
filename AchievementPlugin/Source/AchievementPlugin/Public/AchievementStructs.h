@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// Copyright 2025 Justin Comans. All rights reserved.         ||
 // -------------------------------------------------------------
 
 
@@ -90,6 +90,7 @@ struct ACHIEVEMENTPLUGIN_API FAchievementData : public FLinkedStruct
 {
 	GENERATED_BODY()
 public:
+	FAchievementData() = default;
 #if WITH_EDITOR
 	void UpdateProgressEditorOnly(const FAchievementProgress& progress)
 	{
@@ -100,20 +101,20 @@ public:
 	bool isHidden = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Public")
-	FText displayName;
+	FText displayName = FText();
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Public")
-	FText description;
+	FText description = FText();
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Public")
-	TSoftObjectPtr<UTexture2D> lockedTexture;
+	TSoftObjectPtr<UTexture2D> lockedTexture = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Public")
-	TSoftObjectPtr<UTexture2D> unlockedTexture;
+	TSoftObjectPtr<UTexture2D> unlockedTexture = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Public", meta = (ClampMin = "0"))
 	int32 progressGoal = 1;
 
 	// Platform-specific identifiers
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platforms",
 			  meta = (DisplayName = "Platform Data"))
-	FAchievementPlatformData platformData;
+	FAchievementPlatformData platformData = FAchievementPlatformData();
 #if WITH_EDITORONLY_DATA
 private:
 	// Runtime data (visible only here but not editable, NOT saved to config)

@@ -1,5 +1,5 @@
 ﻿// -------------------------------------------------------------
-// Copyright 2026 Justin Comans. Licensed under CC BY 4.0.    ||
+// Copyright 2025 Justin Comans. All rights reserved.         ||
 // -------------------------------------------------------------
 
 

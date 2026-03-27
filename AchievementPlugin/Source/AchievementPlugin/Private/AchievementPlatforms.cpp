@@ -1,9 +1,8 @@
 // -------------------------------------------------------------
-// Copyright 2025 Justin Comans. Licensed under CC BY 4.0.    ||
+// Copyright 2025 Justin Comans. All rights reserved.         ||
 // -------------------------------------------------------------
-
-// otherwise it will complain about logging using %s instead of %hs, even though %hs gives compile errors
-// ReSharper disable CppPrintfBadFormat
+// Copyright 2025 Justin Comans. All rights reserved.         ||
+// -------------------------------------------------------------
 
 #include "AchievementPlatforms.h"
 
