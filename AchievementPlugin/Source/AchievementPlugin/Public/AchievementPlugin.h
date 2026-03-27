@@ -80,7 +80,7 @@ public:
 		return m_EOSInfo;
 	}
 
-	UPROPERTY(config, EditAnywhere, Category = "Save Slot Settings", meta = (DisplayName = "Default Save Slot Settings",
+	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "Save Slot Settings", meta = (DisplayName = "Default Save Slot Settings",
 			  Tooltip = "The defaults used for the saved profiles for achievementsData. Modifying this can cause old achievement progress to break"))
 	FSaveSlotSettings defaultSaveSlotSettings = FSaveSlotSettings();
 	
@@ -100,17 +100,24 @@ public:
 	bool useAchievementList = true;
 	
 	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|List|Achievement List Settings", meta = (DisplayName = "Achievement List Widget",
-			  ToolTip = "The achievement List widget used for the custom achievement list."))
+			  ToolTip = "The achievement List widget used for the custom achievement list"))
 	TSubclassOf<UAchievementListWidget> achievementListWidgetDefault = nullptr;
 	
 	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|List|Achievement List Settings", meta = (DisplayName = "Default List Filter",
 			  ToolTip = "The Default Filter to apply to the Achievement List"))
 	FAchievementFilterSettings defaultAchievementListFilter;
+	
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|List|Achievement List Settings", meta = (DisplayName = "Auto Show/Hide Cursor",
+			  ToolTip = "Whether or not to automatically show and hide the cursor when the List is shown/collapsed"))
+	bool autoShowCursor = true;
+
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "UI|List|Achievement List Settings", meta = (DisplayName = "Auto Set Input Mode",
+			  ToolTip = "Whether to automatically set the input mode to UI when the List is shown, and back to Game when it is collapsed"))
+	bool autoSetInputMode = false;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Load/Update Runtime Stats",
 			  Tooltip = "Enable this to update the runtime stats (progress) of the achievementsData"))
-
 	bool bLoadRuntimeStatsButton = false;
 
 	UPROPERTY(EditAnywhere, Category = "Achievements Settings Buttons", Transient, meta = (DisplayName = "Force Save Achievment Progress"))

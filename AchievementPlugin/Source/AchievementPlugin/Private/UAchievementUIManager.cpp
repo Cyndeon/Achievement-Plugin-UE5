@@ -71,19 +71,20 @@ bool UAchievementUIManager::CreateAchievementList()
 		UE_LOG(AchievementUILog, Warning, TEXT("Achievement List Widget was already created!"));
 		return false;
 	}
-	
+
 	const auto settings = UAchievementPluginSettings::Get();
 	if (settings->useAchievementList)
 	{
 		if (settings->achievementListWidgetDefault)
 		{
-			AchievementListWidget = CreateWidget<UAchievementListWidget>(GetWorld(), settings->achievementListWidgetDefault);
+			AchievementListWidget = CreateWidget<UAchievementListWidget>(
+				GetWorld(), settings->achievementListWidgetDefault);
 			if (AchievementListWidget)
 			{
 				AchievementListWidget->AddToViewport();
 				AchievementListWidget->SetVisibility(ESlateVisibility::Collapsed);
 				AchievementListWidget->PopulateList();
-				
+
 				AchievementListWidget->ApplyFilter(settings->defaultAchievementListFilter);
 				return true;
 			}
@@ -94,8 +95,14 @@ bool UAchievementUIManager::CreateAchievementList()
 	return false;
 }
 
-bool UAchievementUIManager::ShowAchievementList() const
+bool UAchievementUIManager::ShowAchievementList()
 {
+	if (!AchievementListWidget)
+	{
+		UE_LOG(AchievementUILog, Warning, TEXT("Achievement List Widget was nullptr before trying to show it."))
+		UE_LOG(AchievementUILog, Warning, TEXT("Creating the widget for the Achievement List"));
+		CreateAchievementList();
+	}
 	if (AchievementListWidget)
 	{
 		AchievementListWidget->RefreshDisplay();

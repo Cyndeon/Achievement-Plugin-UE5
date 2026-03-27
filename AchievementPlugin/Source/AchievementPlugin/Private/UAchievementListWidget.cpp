@@ -38,7 +38,7 @@ void UAchievementListWidget::RefreshDisplay() const
 {
 	if (AchievementListView)
 	{
-		AchievementListView->RequestRefresh();
+		AchievementListView->RegenerateAllEntries();
 	}
 }
 

@@ -55,7 +55,7 @@ public:
 	
 	// Achievement List
 	bool CreateAchievementList();
-	bool ShowAchievementList() const;
+	bool ShowAchievementList();
 	bool HideAchievementList() const;
 	bool ForceUpdateAchievementList() const;
 	bool ChangeAchievementListFilters(const FAchievementFilterSettings& filter) const;

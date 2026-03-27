@@ -50,6 +50,13 @@ auto WithManager(Func&& Action) -> decltype(Action(std::declval<UAchievementMana
 	}
 }
 
+UAchievementPluginSettings* UAchievementPluginBPLibrary::GetAchievementPluginSettings()
+{
+	if (const auto settings = UAchievementPluginSettings::Get()) return settings;
+	UE_LOG(AchievementLog, Error, TEXT("UAchievementPluginSettings returns nullptr!"));
+	return nullptr;
+}
+
 bool UAchievementPluginBPLibrary::IncreaseAchievementProgress(const FString& localAchievementId, const float change)
 {
 	return WithManager([&](auto* M) { return M->IncreaseAchievementProgress(localAchievementId, change); });

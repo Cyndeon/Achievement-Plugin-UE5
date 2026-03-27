@@ -13,88 +13,100 @@
 #include "UAchievementListWidget.h"
 #include "AchievementPluginBPLibrary.generated.h"
 
+class UAchievementPluginSettings;
 
 UCLASS()
 class ACHIEVEMENTPLUGIN_API UAchievementPluginBPLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
 public:
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Change Achievement Progress", Keywords = "Change Achievement Progress"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Plugin Settings", Keywords = "Achievement Plugin Settings"), 
+		Category = "AchievementPlugin|Settings")
+	static UAchievementPluginSettings* GetAchievementPluginSettings();
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Change Achievement Progress", Keywords = "Change Achievement Progress"), 
+		Category = "AchievementPlugin|Achievement Progress")
 	static bool IncreaseAchievementProgress(
 		const FString& localAchievementId,
 		float change);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Unlocked Status", Keywords = "Get Achievement unlocked Status"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Unlocked Status", Keywords = "Get Achievement unlocked Status"), 
+		Category = "AchievementPlugin|Achievement Progress")
 	static bool GetAchievementUnlockedStatus(FString& localAchievementId);
 	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Data", Keywords = "Get Achievement Data",
-			Tooltip = "Returns a copy of the achievement using the achievementId"), Category = "AchievementPlugin")
+			Tooltip = "Returns a copy of the achievement using the achievementId"), 
+			Category = "AchievementPlugin|Achievement Data")
 	static FAchievementData GetAchievementData(const FString& localAchievementId);
 	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Progress By Id", Keywords = "Get Achievement Progress By Id",
-			Tooltip = "Returns a copy of the progress for the given achievement's Id"), Category = "AchievementPlugin")
+			Tooltip = "Returns a copy of the progress for the given achievement's Id"), Category = "AchievementPlugin|Achievement Progress")
 	static FAchievementProgress GetAchievementProgressById(const FString& localAchievementId);
 	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Achievement Progress By Data", Keywords = "Get Achievement Progress By Data", 
-			Tooltip = "Returns a copy of the progress for the given achievement"), Category = "AchievementPlugin")
+			Tooltip = "Returns a copy of the progress for the given achievement"), Category = "AchievementPlugin|Achievement Progress")
 	static FAchievementProgress GetAchievementProgressByData(const FAchievementData& achievementData);
 	
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress Async", Keywords = "Save Achievement Progress Async"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress Async", Keywords = "Save Achievement Progress Async"), 
+		Category = "AchievementPlugin|Saving and Loading")
 	static bool SaveAchievementProgressAsync();
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress", Keywords = "Save Achievement Progress"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Save Achievement Progress", Keywords = "Save Achievement Progress"), 
+		Category = "AchievementPlugin|Saving and Loading")
 	static bool SaveAchievementProgress();
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Load Achievement Progress", Keywords = "Load Achievement Progress", 
-			  Tooltip = "This is already done at the start of the game, however, this will force reload it without saving, be careful!"), Category = "AchievementPlugin")
+			  Tooltip = "This is already done at the start of the game, however, this will force reload it without saving, be careful!"), 
+			  Category = "AchievementPlugin|Saving and Loading")
 	static bool LoadAchievementProgress();
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete Single Achievement Progress", Keywords = "Delete Single Achievement Progress",
-			  Tooltip = "Deletes given achievement's progress. This cannot be undone!"), Category = "AchievementPlugin")
+			  Tooltip = "Deletes given achievement's progress. This cannot be undone!"), Category = "AchievementPlugin|Achievement Progress")
 	static bool DeleteSingleAchievementProgress(const FString& localAchievementID, bool platformsToo = true);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Delete All Achievement Progress", Keywords = "Delete Achievement Progress",
-			  Tooltip="Delete's ALL achievements progress. Will empty all progress but keep the file. This cannot be undone!"), Category = "AchievementPlugin")
+			  Tooltip="Delete's ALL achievements progress. Will empty all progress but keep the file. This cannot be undone!"), Category = "AchievementPlugin|Achievement Progress")
 	static bool DeleteAllAchievementProgress(bool platformsToo = true);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Save Slot Index", Keywords = "Save Slot Index"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Save Slot Index", Keywords = "Save Slot Index"), Category = "AchievementPlugin|Saving and Loading")
 	static void SetActiveSaveSlotIndex(int32 newIndex);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Retroactviely Update Achievements On Platforms", Keywords = "Retroactviely Update Achievements Platforms"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Retroactviely Update Achievements On Platforms", Keywords = "Retroactviely Update Achievements Platforms"), 
+		Category = "AchievementPlugin|Platforms")
 	static void RetroactivelyUpdateAchievementsOnPlatforms();
 
 	// this function should only be called when the user manually initializes the platform
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Achievement Platform Initialized", Keywords = "Achievement Platform Initialized"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Achievement Platform Initialized", Keywords = "Achievement Platform Initialized"), Category = "AchievementPlugin|Platforms")
 	static void AchievementPlatformInitialized(EAchievementPlatforms platform, bool init = true);
 
 	// this function is required for the Widget to function properly
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Remove Achievement Widget", Keywords = "Achievement Widget Remove"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Remove Achievement Widget", Keywords = "Achievement Widget Remove"), Category = "AchievementPlugin|Achievement Popup")
 	static void RemoveAchievementWidget();
 	
 	// achievement list functions
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Create Achievement List Widget", Keywords = "Create Achievement List Widget"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Create Achievement List Widget", Keywords = "Create Achievement List Widget"), Category = "AchievementPlugin|Achievement List")
 	static bool CreateAchievementList();
 	
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Show Achievement List Widget", Keywords = "Show Achievement List Widget"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Show Achievement List Widget", Keywords = "Show Achievement List Widget"), Category = "AchievementPlugin|Achievement List")
 	static bool ShowAchievementList();
 	
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Hide Achievement List Widget", Keywords = "Hide Achievement List Widget"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Hide Achievement List Widget", Keywords = "Hide Achievement List Widget"), Category = "AchievementPlugin|Achievement List")
 	static bool HideAchievementList();
 	
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Change Filter For Achievement List Widget", Keywords = "Change Filter Achievement List Widget"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Change Filter For Achievement List Widget", Keywords = "Change Filter Achievement List Widget"), Category = "AchievementPlugin|Achievement List")
 	static bool SetAchievementListFilter(FAchievementFilterSettings filter);
 	
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Filter For Achievement List Widget", Keywords = "Get Filter Achievement List Widget"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Filter For Achievement List Widget", Keywords = "Get Filter Achievement List Widget"), Category = "AchievementPlugin|Achievement List")
 	static FAchievementFilterSettings GetAchievementFilter();
 	
 	// general helper functions
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Default Filter For Achievement List Widget", Keywords = "Get Current Default Filter Achievement List Widget"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Default Filter For Achievement List Widget", Keywords = "Get Current Default Filter Achievement List Widget"), Category = "AchievementPlugin|Achievement List")
 	static FAchievementFilterSettings GetDefaultAchievementFilter();
 	
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Format Number With Suffix", Keywords = "Format Number With Suffix"), Category = "AchievementPlugin")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Format Number With Suffix", Keywords = "Format Number With Suffix"), Category = "AchievementPlugin|Achievement List")
 	static FString FormatNumberWithSuffix(float Value);
 	
-	UFUNCTION(BlueprintCallable, Category = "Achievement UI", meta = (DisplayName = "Set Search Text", Keywords = "Search Filter Achievement"))
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Search Text", Keywords = "Search Filter Achievement"), Category = "AchievementPlugin|Achievement List")
 	static bool SetSearchTextInFilter(FString text);
 };
 

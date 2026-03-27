@@ -389,7 +389,7 @@ void UAchievementManagerSubSystem::Deinitialize()
 	}
 	else
 	{
-		UE_LOG(AchievementLog, Fatal,
+		UE_LOG(AchievementLog, Error,
 		       TEXT("SaveManager seems to have been deleted, achievementsData will not save properly!"));
 	}
 
