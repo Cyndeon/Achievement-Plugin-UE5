@@ -61,7 +61,7 @@ void UAchievementUIManager::QueuePopup(const FText& name, const TSoftObjectPtr<U
 		m_progressCooldowns.Add(achievementName, 0.f);
 	}
 
-	m_queuedPopups.Add(FAchievementNameAndIcon(name, icon, progress));
+	m_queuedPopups.Add(FAchievementPopupData(name, icon, progress));
 }
 
 bool UAchievementUIManager::CreateAchievementList()

@@ -13,12 +13,12 @@
 #include "UAchievementUIManager.generated.h"
 
 USTRUCT()
-struct FAchievementNameAndIcon
+struct FAchievementPopupData
 {
 	GENERATED_BODY()
 public:
-	FAchievementNameAndIcon() = default;
-	FAchievementNameAndIcon(const FText& newName, const TSoftObjectPtr<UTexture2D>& newIcon, 
+	FAchievementPopupData() = default;
+	FAchievementPopupData(const FText& newName, const TSoftObjectPtr<UTexture2D>& newIcon, 
 							const float newProgress = 0.f) : name(newName), image(newIcon), progress(newProgress)
 	{}
 
@@ -85,7 +85,7 @@ private:
 	TArray<TObjectPtr<UUserWidget>> m_popupInstances;
 
 	UPROPERTY()
-	TArray<FAchievementNameAndIcon> m_queuedPopups;
+	TArray<FAchievementPopupData> m_queuedPopups;
 	
 	UPROPERTY()
 	TObjectPtr<UAchievementListWidget> AchievementListWidget;
