@@ -13,7 +13,7 @@ Here's some common issues that may occur when using the plugin.
 - If using Stats (for progress achievements), make sure to check that you are uploading the correct type to Steam. It expects either int32 or float, so your achievement needs to use the same type (found in the Platform Settings of the achievement)
 
 ### **Epic achievements not syncing:**
-- Check your Epic Games data is correct in Project Settings ([The starting guide has tips on how to fill it in](Basic%20Starting%20Guide.md))
+- Check your Epic Games data is correct in Project Settings (The starting guide has tips on how to fill it in, [[Basic Starting Guide]])
 - Check your selected Platform in the Project Settings, this must be set to EOS
 - Verify achievements are set up in Epic Games Dev portal
 
@@ -25,11 +25,11 @@ Here's some common issues that may occur when using the plugin.
 
 **Note: The plugin's creator will not be held responsible for any issues that may arise from using the plugin on a version it wasn't built for. While it likely will work fine for some earlier versions, make sure that if you build it for an earlier or later version, that you test it in a clean testing environment before adding it to your project**
 
-### **I want to initialize a non-local platform myself, how?**
-- I have created a page for that as well, please look there: [Manual platform initialization](Manual%20platform%20initialization.md)
+### **I want to initialize a non-local platform myself or just disable initializing the platform I chose, how do I do this?**
+- I have created a page for that as well, please look there: [[Platform Initialization]]
 
-### **When trying to download achievements, nothing happens!**
-- Make sure that your plugin's selected platform isn't set to `Local Only`
+### **When trying to download achievements from platforms (Steam/EOS), nothing happens!**
+- Make sure that your plugin's selected platform isn't set to `Local Only`, it has to be set to the platform you want to download from.
 - Otherwise it is because the plugin will first attempt to connect to the platform, which means it might take a couple of tries before it is set up properly. This mostly seems to be an issue with EOS, it might take up to 3 attempts to download it but it should work regardless
 - Make sure you have a proper internet connection to connect to the platform of choice
 - Make sure the data (SteamAppId, Epic Games Store Data, etc.) is configured properly
